@@ -28,7 +28,7 @@
     <span class="text-[10px] bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full font-mono text-cyan-400">IANCON</span>
   </header>
 
-  <!-- Main Game Container -->
+  <!-- Main Container -->
   <main class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl my-2 flex flex-col gap-3">
     
     <!-- Task Selection Tabs -->
@@ -40,14 +40,14 @@
         2. Spiral
       </button>
       <button id="btnTask3" onclick="switchTask('button')" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
-        3. Button Shirt
+        3. Thread Buttons
       </button>
     </div>
 
     <!-- Live Status & Score Bar -->
     <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs">
       <div>
-        <span class="text-slate-400 text-[10px] block">Therapeutic Status</span>
+        <span class="text-slate-400 text-[10px] block">Therapeutic State</span>
         <span id="statusBadge" class="font-extrabold brand-red uppercase text-xs">Untreated ET Tremor</span>
       </div>
       <div class="text-right">
@@ -56,23 +56,23 @@
       </div>
     </div>
 
-    <!-- Main Dynamic Interactive Canvas Area -->
+    <!-- Dynamic Interactive Canvas Area -->
     <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800 overflow-hidden touch-none cursor-crosshair">
       <canvas id="gameCanvas" class="w-full h-full block"></canvas>
       
-      <!-- Instructional Overlay Banner -->
+      <!-- Instructional Banner -->
       <div id="instructionBox" class="absolute top-2 left-2 right-2 bg-slate-900/90 border border-slate-700 p-2 rounded-lg text-center text-xs text-slate-300 pointer-events-none">
-        Press & Hold on screen to pour tea into moving target cup.
+        Press & Hold to pour tea into the moving cup.
       </div>
     </div>
 
-    <!-- Treatment Toggle Button (Prolet Activation) -->
+    <!-- Treatment Toggle Button -->
     <button id="proletBtn" onclick="toggleProlet()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-xl transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2 text-sm">
       <span>⚡ ACTIVATE PROLET (Primidone) EFFICACY</span>
     </button>
   </main>
 
-  <!-- Live Oscillogram Waveform Footer -->
+  <!-- Live Waveform Footer -->
   <footer class="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-xl p-3 shadow-lg">
     <div class="flex justify-between items-center mb-1 text-[10px] text-slate-400">
       <span>Thalamocortical Motor Waveform</span>
@@ -84,25 +84,33 @@
   </footer>
 
   <script>
-    // System Canvas Setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
     const waveCtx = waveCanvas.getContext('2d');
 
-    let currentTask = 'tea'; // 'tea', 'spiral', 'button'
+    let currentTask = 'tea';
     let isProletActive = false;
     let isInteracting = false;
     let score = 0;
-    let attempts = 0;
-    let hits = 0;
 
-    // Position Coordinates
     let pointer = { x: 150, y: 150 };
-    let target = { x: 150, y: 150, radius: 35, angle: 0 };
+    let target = { x: 150, y: 150, radius: 40, angle: 0 };
+    
+    // Task 1 Stats
+    let teaAttempts = 0;
+    let teaHits = 0;
+
+    // Task 2 Stats
     let spiralPath = [];
     let userPath = [];
-    let buttons = [];
+
+    // Task 3 Stats (Precision Needle Threading)
+    let buttonHoles = [];
+    let activeHoleIdx = 0;
+    let buttonPath = [];
+    let threadHits = 0;
+    let threadErrors = 0;
 
     function resizeCanvas() {
       const rect = canvas.parentElement.getBoundingClientRect();
@@ -113,7 +121,7 @@
       initTask();
     }
 
-    // Audio Synthetic Sound FX (Web Audio API)
+    // Web Audio Sound Synth
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playTone(freq, duration = 0.1, type = 'sine') {
       try {
@@ -122,7 +130,7 @@
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -131,38 +139,41 @@
       } catch(e){}
     }
 
-    // Task Initialization Routines
     function initTask() {
       score = 0;
-      attempts = 0;
-      hits = 0;
+      teaAttempts = 0;
+      teaHits = 0;
       userPath = [];
+      buttonPath = [];
+      activeHoleIdx = 0;
+      threadHits = 0;
+      threadErrors = 0;
       document.getElementById('scoreDisplay').innerText = '0%';
 
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
 
       if (currentTask === 'tea') {
-        target = { x: cx, y: cy + 60, radius: 40, angle: 0 };
+        target = { x: cx, y: cy + 60, radius: 42, angle: 0 };
         document.getElementById('instructionBox').innerText = 'Press & Hold to pour liquid into the moving cup.';
       } 
       else if (currentTask === 'spiral') {
         spiralPath = [];
         const maxRadius = Math.min(canvas.width, canvas.height) * 0.38;
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 220; i++) {
           let angle = 0.12 * i;
-          let r = (maxRadius / 200) * i;
+          let r = (maxRadius / 220) * i;
           spiralPath.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
         }
         document.getElementById('instructionBox').innerText = 'Trace finger/stylus along the spiral baseline path.';
       } 
       else if (currentTask === 'button') {
-        buttons = [
-          { x: cx - 60, y: cy - 70, r: 24, hit: false },
-          { x: cx + 60, y: cy, r: 24, hit: false },
-          { x: cx - 40, y: cy + 70, r: 24, hit: false }
+        buttonHoles = [
+          { x: cx, y: cy - 100, radius: 22, passed: false },
+          { x: cx, y: cy, radius: 22, passed: false },
+          { x: cx, y: cy + 100, radius: 22, passed: false }
         ];
-        document.getElementById('instructionBox').innerText = 'Tap directly inside all 3 shirt button hole targets.';
+        document.getElementById('instructionBox').innerText = 'Press & drag the thread through all 3 button holes in sequence without hitting the rims.';
       }
     }
 
@@ -192,7 +203,7 @@
         label.className = 'text-emerald-400 font-bold';
         btn.innerHTML = '<span>RESET TO UNTREATED ET STATE</span>';
         btn.className = 'w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold py-3.5 rounded-xl transition border border-slate-700 text-sm';
-        playTone(600, 0.25, 'triangle');
+        playTone(650, 0.2, 'triangle');
       } else {
         badge.innerText = 'Untreated ET Tremor';
         badge.className = 'font-extrabold brand-red uppercase text-xs';
@@ -200,12 +211,11 @@
         label.className = 'brand-red font-bold';
         btn.innerHTML = '<span>⚡ ACTIVATE PROLET (Primidone) EFFICACY</span>';
         btn.className = 'w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-xl transition transform active:scale-95 shadow-lg text-sm';
-        playTone(250, 0.25, 'sawtooth');
+        playTone(220, 0.2, 'sawtooth');
       }
       initTask();
     }
 
-    // Touch & Pointer Coordinates
     function updatePointer(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -214,10 +224,10 @@
       let rawX = clientX - rect.left;
       let rawY = clientY - rect.top;
 
-      // Apply Tremor Jitter Math in Untreated Mode
+      // Tremor Jitter Calculation
       if (!isProletActive && isInteracting) {
-        let jitterX = (Math.random() - 0.5) * 28;
-        let jitterY = (Math.random() - 0.5) * 28;
+        let jitterX = (Math.random() - 0.5) * 36;
+        let jitterY = (Math.random() - 0.5) * 36;
         pointer.x = rawX + jitterX;
         pointer.y = rawY + jitterY;
       } else {
@@ -225,17 +235,20 @@
         pointer.y = rawY;
       }
 
-      if (isInteracting && currentTask === 'spiral') {
-        userPath.push({ x: pointer.x, y: pointer.y });
-        calculateSpiralScore();
+      if (isInteracting) {
+        if (currentTask === 'spiral') {
+          userPath.push({ x: pointer.x, y: pointer.y });
+          calculateSpiralScore();
+        } else if (currentTask === 'button') {
+          buttonPath.push({ x: pointer.x, y: pointer.y });
+          calculateThreadingScore();
+        }
       }
     }
 
-    // Interaction Handlers
     function startInteract(e) {
       isInteracting = true;
       updatePointer(e);
-      if (currentTask === 'button') checkButtonHit();
     }
 
     function stopInteract() {
@@ -250,22 +263,10 @@
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (isInteracting) updatePointer(e); });
     canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopInteract(); });
 
-    // Scoring Engine Math
-    function checkButtonHit() {
-      buttons.forEach(b => {
-        let dist = Math.hypot(pointer.x - b.x, pointer.y - b.y);
-        if (dist <= b.r && !b.hit) {
-          b.hit = true;
-          hits++;
-          playTone(800, 0.15);
-        }
-      });
-      score = Math.round((hits / buttons.length) * 100);
-      document.getElementById('scoreDisplay').innerText = score + '%';
-    }
-
+    // Stricter Spiral Math for ET vs Prolet
     function calculateSpiralScore() {
       if (userPath.length < 5 || spiralPath.length === 0) return;
+      
       let totalErr = 0;
       userPath.forEach(pt => {
         let minDist = Infinity;
@@ -275,21 +276,55 @@
         });
         totalErr += minDist;
       });
+
       let avgErr = totalErr / userPath.length;
-      score = Math.max(0, Math.min(100, Math.round(100 - (avgErr * 2.2))));
+
+      // Stricter Penalty Curve
+      if (!isProletActive) {
+        // High penalty for Tremor Jitter
+        score = Math.max(12, Math.min(48, Math.round(100 - (avgErr * 6.5))));
+      } else {
+        // High accuracy rewarded for Smooth Stroke
+        score = Math.max(70, Math.min(98, Math.round(100 - (avgErr * 2.0))));
+      }
+
       document.getElementById('scoreDisplay').innerText = score + '%';
     }
 
-    // Main Game Loop & Renderer
+    // Button Threading Logic
+    function calculateThreadingScore() {
+      if (activeHoleIdx >= buttonHoles.length) return;
+
+      let targetHole = buttonHoles[activeHoleIdx];
+      let dist = Math.hypot(pointer.x - targetHole.x, pointer.y - targetHole.y);
+
+      if (dist <= targetHole.radius) {
+        threadHits++;
+        if (dist <= targetHole.radius * 0.6) {
+          targetHole.passed = true;
+          activeHoleIdx++;
+          playTone(850, 0.15, 'triangle');
+        }
+      } else {
+        threadErrors++;
+        if (threadErrors % 6 === 0) playTone(180, 0.08, 'sawtooth');
+      }
+
+      let totalSteps = Math.max(1, threadHits + threadErrors);
+      score = Math.min(100, Math.round((threadHits / totalSteps) * 100));
+      if (!isProletActive) score = Math.min(score, 35); // Cap untreated score
+      document.getElementById('scoreDisplay').innerText = score + '%';
+    }
+
+    // Game Loop & Canvas Renderer
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Task 1: Pour Tea
       if (currentTask === 'tea') {
         target.angle += 0.02;
-        target.x = (canvas.width / 2) + Math.sin(target.angle) * 70;
+        target.x = (canvas.width / 2) + Math.sin(target.angle) * 80;
 
-        // Draw Cup Target
         ctx.beginPath();
         ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
         ctx.fillStyle = '#1e293b';
@@ -298,29 +333,29 @@
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Draw Stream & Check Liquid Fill
         if (isInteracting) {
-          attempts++;
+          teaAttempts++;
           ctx.beginPath();
           ctx.moveTo(pointer.x, 0);
           ctx.lineTo(pointer.x, canvas.height);
           ctx.strokeStyle = isProletActive ? '#22d3ee' : '#e53238';
-          ctx.lineWidth = isProletActive ? 6 : 12;
+          ctx.lineWidth = isProletActive ? 6 : 14;
           ctx.stroke();
 
           let dist = Math.abs(pointer.x - target.x);
           if (dist < target.radius) {
-            hits++;
-            if (attempts % 4 === 0) playTone(400, 0.05);
+            teaHits++;
+            if (teaAttempts % 4 === 0) playTone(450, 0.05);
           }
-          score = Math.min(100, Math.round((hits / Math.max(1, attempts)) * 100));
+          
+          let rawRatio = (teaHits / Math.max(1, teaAttempts));
+          score = isProletActive ? Math.min(96, Math.round(rawRatio * 100)) : Math.min(38, Math.round(rawRatio * 50));
           document.getElementById('scoreDisplay').innerText = score + '%';
         }
       }
 
       // Task 2: Spiral
       else if (currentTask === 'spiral') {
-        // Draw Guide Template Spiral
         ctx.beginPath();
         spiralPath.forEach((pt, i) => {
           if (i === 0) ctx.moveTo(pt.x, pt.y);
@@ -330,7 +365,6 @@
         ctx.lineWidth = 14;
         ctx.stroke();
 
-        // Draw User Drawing Line
         if (userPath.length > 1) {
           ctx.beginPath();
           userPath.forEach((pt, i) => {
@@ -343,28 +377,53 @@
         }
       }
 
-      // Task 3: Button Shirt
+      // Task 3: Threading Shirt Buttons
       else if (currentTask === 'button') {
-        buttons.forEach(b => {
+        // Draw Shirt Placket Line
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 40);
+        ctx.lineTo(canvas.width / 2, canvas.height - 40);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        // Draw Buttons
+        buttonHoles.forEach((hole, idx) => {
           ctx.beginPath();
-          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-          ctx.fillStyle = b.hit ? '#10b981' : '#1e293b';
+          ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
+          ctx.fillStyle = hole.passed ? '#10b981' : (idx === activeHoleIdx ? '#1e293b' : '#0f172a');
           ctx.fill();
-          ctx.strokeStyle = b.hit ? '#34d399' : '#e53238';
+          ctx.strokeStyle = hole.passed ? '#34d399' : (idx === activeHoleIdx ? '#e53238' : '#475569');
+          ctx.lineWidth = idx === activeHoleIdx ? 4 : 2;
+          ctx.stroke();
+
+          // Button Center Hole
+          ctx.beginPath();
+          ctx.arc(hole.x, hole.y, hole.radius * 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = '#020617';
+          ctx.fill();
+        });
+
+        // Draw Thread Stroke
+        if (buttonPath.length > 1) {
+          ctx.beginPath();
+          buttonPath.forEach((pt, i) => {
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          });
+          ctx.strokeStyle = isProletActive ? '#22d3ee' : '#e53238';
           ctx.lineWidth = 3;
           ctx.stroke();
-        });
+        }
       }
 
-      // Draw Cursor Pointer
+      // Draw Cursor Pointer Thread
       ctx.beginPath();
-      ctx.arc(pointer.x, pointer.y, 8, 0, Math.PI * 2);
+      ctx.arc(pointer.x, pointer.y, 7, 0, Math.PI * 2);
       ctx.fillStyle = isProletActive ? '#10b981' : '#e53238';
       ctx.fill();
 
-      // Render Oscillogram Baseline
       renderOscillogram();
-
       requestAnimationFrame(render);
     }
 
