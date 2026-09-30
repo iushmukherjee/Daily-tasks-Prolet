@@ -299,6 +299,10 @@
       }
     }
 
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
     function initCurrentTask() {
       score = 0;
       userPath = [];
@@ -608,7 +612,14 @@
         }
 
         if (teaAttempts > 0) {
-          score = Math.min(100, Math.round((teaHits / teaAttempts) * 100));
+          let rawAccuracy = (teaHits / teaAttempts) * 100;
+          if (currentPhase === 1) {
+            // Tremor causes significant spillage -> Cap accuracy realistic low (18% - 38%)
+            score = Math.min(getRandomInt(22, 38), Math.round(rawAccuracy * 0.4));
+          } else {
+            // Post-Tx steady pour -> High precision (88% - 98%)
+            score = Math.min(98, Math.max(getRandomInt(88, 96), Math.round(rawAccuracy * 1.1)));
+          }
         }
       }
 
@@ -637,7 +648,14 @@
         ctx.stroke();
 
         if (userPath.length > 5) {
-          score = currentPhase === 1 ? Math.max(25, 100 - userPath.length % 40) : Math.min(98, 85 + userPath.length % 12);
+          if (currentPhase === 1) {
+            // High tremor wave deviation -> Low spiral score (20% - 42%)
+            let devFactor = (userPath.length % 15);
+            score = getRandomInt(20, 35) + devFactor;
+          } else {
+            // Smooth trajectory -> High spiral score (86% - 96%)
+            score = Math.min(97, getRandomInt(88, 95) + (userPath.length % 3));
+          }
         }
       }
 
@@ -670,8 +688,10 @@
         drawKey(keyPos.x, keyPos.y);
 
         let dist = Math.hypot(keyPos.x - lock.x, (keyPos.y - 50) - lock.y);
-        if (dist < 25) {
-          score = currentPhase === 1 ? 42 : 96;
+        if (dist < 35) {
+          score = currentPhase === 1 ? getRandomInt(25, 45) : getRandomInt(90, 98);
+        } else {
+          score = currentPhase === 1 ? getRandomInt(10, 25) : getRandomInt(45, 70);
         }
       }
 
