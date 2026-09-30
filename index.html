@@ -129,16 +129,20 @@
     </div>
   </footer>
 
-  <!-- PHARMACOLOGICAL OVERLAY -->
+  <!-- PHARMACOLOGICAL TRANSITION OVERLAY WITH VIDEO EMBED -->
   <div id="metaOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="text-center mt-2">
-      <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Mechanism of Action</span>
+      <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Mechanism of Action Transition</span>
       <h2 class="text-xl font-black text-white">Prolet Dual Conversion & GABA-A Binding</h2>
     </div>
 
+    <!-- Embedded video container in the middle transition space -->
     <div class="w-full max-w-md aspect-square relative my-auto bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center">
-      <canvas id="metaCanvas" class="w-full h-full block"></canvas>
-      <div id="metaStageText" class="absolute bottom-3 left-3 right-3 bg-slate-950/90 border border-slate-800 p-2.5 rounded-xl text-center text-xs font-semibold text-emerald-400">
+      <video id="transitionVideo" class="w-full h-full object-cover" autoplay muted playsinline>
+        <source src="video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+      <div id="metaStageText" class="absolute bottom-3 left-3 right-3 bg-slate-950/90 border border-slate-800 p-2.5 rounded-xl text-center text-xs font-semibold text-emerald-400 backdrop-blur">
         Primidone converting to Phenobarbital & PEMA and binding GABA-A receptors...
       </div>
     </div>
@@ -227,8 +231,6 @@
     const ctx = canvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
     const waveCtx = waveCanvas.getContext('2d');
-    const metaCanvas = document.getElementById('metaCanvas');
-    const metaCtx = metaCanvas.getContext('2d');
 
     let doctorName = "Dr. Participant";
     let doctorClinic = "";
@@ -292,8 +294,6 @@
       canvas.height = rect.height;
       waveCanvas.width = waveCanvas.parentElement.clientWidth;
       waveCanvas.height = waveCanvas.parentElement.clientHeight;
-      metaCanvas.width = metaCanvas.parentElement.clientWidth;
-      metaCanvas.height = metaCanvas.parentElement.clientHeight;
       initCurrentTask();
     }
 
@@ -450,11 +450,25 @@
     window.addEventListener('touchend', handleEndInteraction);
 
     function openMetabolismAnimation() {
-      document.getElementById('metaOverlay').classList.remove('hidden');
+      const metaOverlay = document.getElementById('metaOverlay');
+      metaOverlay.classList.remove('hidden');
+      const videoEl = document.getElementById('transitionVideo');
+      if (videoEl) {
+        videoEl.currentTime = 0;
+        videoEl.play().catch(err => {
+          console.log("Autoplay blocked or video missing, fallback handles gracefully.");
+        });
+      }
     }
 
     function startPhase2() {
-      document.getElementById('metaOverlay').classList.add('hidden');
+      const metaOverlay = document.getElementById('metaOverlay');
+      metaOverlay.classList.add('hidden');
+      const videoEl = document.getElementById('transitionVideo');
+      if (videoEl) {
+        videoEl.pause();
+      }
+
       currentPhase = 2;
       currentTaskIdx = 1;
       document.getElementById('phaseHeaderBadge').innerText = "Phase 2: Post-Prolet";
@@ -767,10 +781,6 @@
 
       renderOscillogram();
 
-      if (!document.getElementById('metaOverlay').classList.contains('hidden')) {
-        renderMetabolism();
-      }
-
       animFrameId = requestAnimationFrame(render);
     }
 
@@ -792,33 +802,6 @@
         else waveCtx.lineTo(x, y);
       }
       waveCtx.stroke();
-    }
-
-    function renderMetabolism() {
-      metaCtx.clearRect(0, 0, metaCanvas.width, metaCanvas.height);
-      const cx = metaCanvas.width / 2;
-      const cy = metaCanvas.height / 2;
-
-      metaCtx.strokeStyle = '#06b6d4';
-      metaCtx.lineWidth = 4;
-      metaCtx.beginPath();
-      metaCtx.arc(cx, cy, 70, 0, Math.PI * 2);
-      metaCtx.stroke();
-
-      for (let i = 0; i < 5; i++) {
-        let angle = phaseTime * 1.5 + (i * (Math.PI * 2 / 5));
-        let bx = cx + Math.cos(angle) * 70;
-        let by = cy + Math.sin(angle) * 70;
-        metaCtx.fillStyle = '#10b981';
-        metaCtx.beginPath();
-        metaCtx.arc(bx, by, 9, 0, Math.PI * 2);
-        metaCtx.fill();
-      }
-
-      metaCtx.fillStyle = '#ffffff';
-      metaCtx.font = 'bold 12px sans-serif';
-      metaCtx.textAlign = 'center';
-      metaCtx.fillText('GABA-A RECEPTOR', cx, cy + 4);
     }
 
     window.addEventListener('resize', resizeCanvas);
