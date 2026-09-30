@@ -107,9 +107,9 @@
     <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800/90 overflow-hidden touch-none cursor-crosshair shadow-inner">
       <canvas id="gameCanvas" class="w-full h-full block"></canvas>
       
-      <!-- Instructional Guide Overlay -->
-      <div id="instructionBox" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 p-2.5 rounded-xl text-center text-xs text-slate-200 pointer-events-none shadow-lg backdrop-blur">
-        Press & Hold to pour water into the glass cup (10s timer).
+      <!-- Instructional Guide Overlay (Auto-Fades on Touch/Click) -->
+      <div id="instructionBox" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 p-2.5 rounded-xl text-center text-xs text-slate-200 pointer-events-none shadow-lg backdrop-blur transition-opacity duration-300">
+        Press & Hold to pour water into the cup (10s timer).
       </div>
     </div>
 
@@ -137,7 +137,6 @@
       <h2 class="text-xl font-black text-white">Prolet Dual Conversion & GABA-A Binding</h2>
     </div>
 
-    <!-- Canvas for Unified Molecular & Synaptic Cellular Animation -->
     <div class="w-full max-w-md aspect-square relative my-auto bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center">
       <canvas id="metaCanvas" class="w-full h-full block"></canvas>
       <div id="metaStageText" class="absolute bottom-3 left-3 right-3 bg-slate-950/90 border border-slate-800 p-2.5 rounded-xl text-center text-xs font-semibold text-emerald-400">
@@ -166,7 +165,6 @@
         <img src="logo.png" alt="Prolet" class="h-7 object-contain" onerror="this.style.display='none'">
       </div>
 
-      <!-- Individual Score Comparison Matrix -->
       <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
         <div class="grid grid-cols-4 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-800/80 pb-2">
           <span>Functional Task</span>
@@ -197,7 +195,6 @@
         </div>
       </div>
 
-      <!-- Mean Motor Control Summary -->
       <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
         <div>
           <span class="text-[10px] text-slate-400 uppercase font-bold block">Overall Mean Precision</span>
@@ -209,7 +206,6 @@
         </div>
       </div>
 
-      <!-- IANCON DOCTOR LEADERBOARD TABLE -->
       <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
           <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -219,7 +215,7 @@
         </div>
 
         <div id="leaderboardList" class="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
-          <!-- Leaderboard entries dynamically inserted here -->
+          <!-- Entries inserted dynamically -->
         </div>
       </div>
 
@@ -261,18 +257,13 @@
 
     // Position Coordinates & Objects
     let pointer = { x: 150, y: 150 };
-    let cup = { x: 150, y: 150, width: 80, height: 100, waterLevel: 0, angle: 0 };
+    let cup = { x: 150, y: 150, width: 80, height: 100, waterLevel: 0 };
     let waterDrops = [];
     let spiralPath = [];
     let userPath = [];
 
     // Task 3: Key in Lock Parameters
     let lock = { x: 150, y: 150, radius: 45 };
-    let key = { x: 150, y: 300, length: 110, width: 22 };
-    let keyTrackingSamples = [];
-
-    // Phase Transition Particle Engine
-    let transitionParticles = [];
 
     function registerDoctor(e) {
       if (e) e.preventDefault();
@@ -300,36 +291,23 @@
       initCurrentTask();
     }
 
-    // Sound Synthesizer Engine
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playTone(freq, duration = 0.08, type = 'sine') {
-      try {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch(e){}
+    function resetInstructionBox(text) {
+      const box = document.getElementById('instructionBox');
+      if (box) {
+        box.innerText = text;
+        box.classList.remove('opacity-0');
+      }
     }
 
-    // Task Initialization Routines
     function initCurrentTask() {
       score = 0;
       userPath = [];
       waterDrops = [];
-      keyTrackingSamples = [];
       document.getElementById('scoreDisplay').innerText = '0%';
 
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
 
-      // Update Navigation Tabs
       ['tabTask1', 'tabTask2', 'tabTask3'].forEach((id, idx) => {
         const el = document.getElementById(id);
         if (idx + 1 === currentTaskIdx) {
@@ -339,23 +317,21 @@
         }
       });
 
-      // Task 1: Pour Water Setup
       if (currentTaskIdx === 1) {
-        cup = { x: cx - 40, y: cy + 30, width: 80, height: 110, waterLevel: 0, angle: 0 };
+        cup = { x: cx, y: cy + 40, width: 80, height: 100, waterLevel: 0 };
         teaAttempts = 0;
         teaHits = 0;
         t1Timer = 10.0;
         document.getElementById('timerContainer').classList.remove('hidden');
         document.getElementById('nextTaskBtn').classList.add('hidden');
-        document.getElementById('instructionBox').innerText = 'Press & Hold to pour water cleanly into the moving cup (10.0s Limit).';
+        resetInstructionBox('Press & Hold to pour water cleanly into the cup (10.0s Limit).');
         startT1Timer();
       } 
-      // Task 2: Spiral Trace Setup
       else if (currentTaskIdx === 2) {
         clearInterval(t1TimerInterval);
         document.getElementById('timerContainer').classList.add('hidden');
         document.getElementById('nextTaskBtn').classList.remove('hidden');
-        document.getElementById('instructionBox').innerText = 'Trace along the spiral path. Press confirm button when finished.';
+        resetInstructionBox('Trace along the spiral path. Press confirm button when finished.');
         spiralPath = [];
         const maxRadius = Math.min(canvas.width, canvas.height) * 0.38;
         for (let i = 0; i < 220; i++) {
@@ -364,19 +340,16 @@
           spiralPath.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
         }
       } 
-      // Task 3: Key in Lock Setup
       else if (currentTaskIdx === 3) {
         clearInterval(t1TimerInterval);
         document.getElementById('timerContainer').classList.add('hidden');
         document.getElementById('nextTaskBtn').classList.remove('hidden');
-        document.getElementById('instructionBox').innerText = 'Drag the key upward to insert it into the lock aperture, then click confirm.';
+        resetInstructionBox('Drag the key upward to insert it into the keyhole, then click confirm.');
         lock = { x: cx, y: cy - 90, radius: 46 };
-        key = { x: cx, y: cy + 110, length: 110, width: 22 };
-        pointer = { x: key.x, y: key.y };
+        pointer = { x: cx, y: cy + 110 };
       }
     }
 
-    // 10-Second Countdown Timer Engine
     function startT1Timer() {
       clearInterval(t1TimerInterval);
       t1TimerInterval = setInterval(() => {
@@ -385,7 +358,7 @@
           t1Timer = 0;
           clearInterval(t1TimerInterval);
           
-          document.getElementById('instructionBox').innerText = 'Task 1 complete! Preparing Task 2...';
+          resetInstructionBox('Task 1 complete! Preparing Task 2...');
           setTimeout(() => {
             if (currentPhase === 1) preScores.t1 = score;
             else postScores.t1 = score;
@@ -415,7 +388,6 @@
       }
     }
 
-    // Natural 4-7Hz Tremor Math & Touch Input
     let tremorTime = 0;
     function updatePointer(e) {
       const rect = canvas.getBoundingClientRect();
@@ -435,6 +407,13 @@
         pointer.x = rawX;
         pointer.y = rawY;
       }
+    }
+
+    function handleStartInteraction(e) {
+      isInteracting = true;
+      updatePointer(e);
+      const box = document.getElementById('instructionBox');
+      if (box) box.classList.add('opacity-0');
     }
 
     function openMetabolismAnimation() {
@@ -503,25 +482,116 @@
       document.getElementById('docClinicInput').value = '';
     }
 
+    // --- DRAWING HELPER FUNCTIONS ---
+    
+    // Draw Realistic Glass Tea Cup
+    function drawCup(x, y, width, height, fillPercentage) {
+      ctx.save();
+      
+      // Water level inside cup
+      if (fillPercentage > 0) {
+        let currentFillH = (height - 10) * fillPercentage;
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
+        ctx.beginPath();
+        ctx.rect(x - width / 2 + 4, y + height - currentFillH - 4, width - 8, currentFillH);
+        ctx.fill();
+      }
+
+      // Cup Body
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 4;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      
+      ctx.beginPath();
+      ctx.moveTo(x - width / 2, y);
+      ctx.lineTo(x - width / 2 + 8, y + height - 8);
+      ctx.quadraticCurveTo(x - width / 2 + 12, y + height, x - width / 2 + 20, y + height);
+      ctx.lineTo(x + width / 2 - 20, y + height);
+      ctx.quadraticCurveTo(x + width / 2 - 12, y + height, x + width / 2 - 8, y + height - 8);
+      ctx.lineTo(x + width / 2, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Top Rim
+      ctx.beginPath();
+      ctx.ellipse(x, y, width / 2, 8, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Glass Handle (Right side)
+      ctx.beginPath();
+      ctx.arc(x + width / 2 + 10, y + height / 2 - 5, 18, -Math.PI / 2, Math.PI / 2);
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Draw Realistic Metallic Key
+    function drawKey(x, y) {
+      ctx.save();
+      
+      // Metallic Gradient
+      let grad = ctx.createLinearGradient(x - 20, y, x + 20, y);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.5, '#eab308');
+      grad.addColorStop(1, '#ca8a04');
+
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 2;
+
+      // Key Bow (Head)
+      ctx.beginPath();
+      ctx.arc(x, y + 60, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Key Hole in Bow
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.arc(x, y + 60, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Key Shaft
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - 4, y - 50, 8, 100);
+      ctx.strokeRect(x - 4, y - 50, 8, 100);
+
+      // Key Blade / Teeth
+      ctx.beginPath();
+      ctx.moveTo(x + 4, y - 40);
+      ctx.lineTo(x + 16, y - 40);
+      ctx.lineTo(x + 16, y - 32);
+      ctx.lineTo(x + 8, y - 32);
+      ctx.lineTo(x + 18, y - 24);
+      ctx.lineTo(x + 18, y - 16);
+      ctx.lineTo(x + 8, y - 16);
+      ctx.lineTo(x + 14, y - 8);
+      ctx.lineTo(x + 4, y - 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     // Render Engine
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Task 1 Render Routine
       if (currentTaskIdx === 1) {
-        // Draw Glass Cup
         cup.x = (canvas.width / 2) + Math.sin(Date.now() * 0.002) * 50;
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(cup.x - cup.width / 2, cup.y, cup.width, cup.height);
+        let fillPct = teaAttempts > 0 ? Math.min(1, teaHits / 200) : 0;
+        drawCup(cup.x, cup.y, cup.width, cup.height, fillPct);
 
-        // Water pouring logic
         if (isInteracting && t1Timer > 0) {
           teaAttempts++;
-          waterDrops.push({ x: pointer.x, y: pointer.y, vy: 5 });
+          waterDrops.push({ x: pointer.x, y: pointer.y, vy: 6 });
         }
 
-        ctx.fillStyle = '#0284c7';
+        ctx.fillStyle = '#38bdf8';
         for (let i = waterDrops.length - 1; i >= 0; i--) {
           let d = waterDrops[i];
           d.y += d.vy;
@@ -573,27 +643,41 @@
 
       // Task 3 Render Routine
       else if (currentTaskIdx === 3) {
+        // Draw Lock Escutcheon
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.arc(lock.x, lock.y, lock.radius, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
         ctx.stroke();
 
-        let keyY = isInteracting ? pointer.y : key.y;
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(key.x - key.width / 2, keyY, key.width, key.length);
+        // Keyhole Shape
+        ctx.fillStyle = '#020617';
+        ctx.beginPath();
+        ctx.arc(lock.x, lock.y - 6, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(lock.x - 6, lock.y - 2);
+        ctx.lineTo(lock.x + 6, lock.y - 2);
+        ctx.lineTo(lock.x + 9, lock.y + 16);
+        ctx.lineTo(lock.x - 9, lock.y + 16);
+        ctx.closePath();
+        ctx.fill();
 
-        let dist = Math.hypot(pointer.x - lock.x, pointer.y - lock.y);
-        if (dist < lock.radius) {
+        // Draw Dragged Key
+        let keyPos = isInteracting ? pointer : { x: canvas.width / 2, y: canvas.height / 2 + 110 };
+        drawKey(keyPos.x, keyPos.y);
+
+        let dist = Math.hypot(keyPos.x - lock.x, (keyPos.y - 50) - lock.y);
+        if (dist < 25) {
           score = currentPhase === 1 ? 42 : 96;
         }
       }
 
       document.getElementById('scoreDisplay').innerText = score + '%';
 
-      // Draw Thalamocortical Oscillogram
+      // Draw Waveform Oscillogram
       waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
       waveCtx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
       waveCtx.lineWidth = 2;
@@ -611,14 +695,13 @@
     }
 
     // Canvas Interaction Listeners
-    canvas.addEventListener('mousedown', (e) => { isInteracting = true; updatePointer(e); });
+    canvas.addEventListener('mousedown', (e) => { handleStartInteraction(e); });
     canvas.addEventListener('mousemove', (e) => { if (isInteracting) updatePointer(e); });
     canvas.addEventListener('mouseup', () => { isInteracting = false; });
-    canvas.addEventListener('touchstart', (e) => { isInteracting = true; updatePointer(e); }, { passive: true });
+    canvas.addEventListener('touchstart', (e) => { handleStartInteraction(e); }, { passive: true });
     canvas.addEventListener('touchmove', (e) => { if (isInteracting) updatePointer(e); }, { passive: true });
     canvas.addEventListener('touchend', () => { isInteracting = false; });
 
-    // Initialize layout & loop on load
     window.onload = () => {
       resizeCanvas();
       render();
