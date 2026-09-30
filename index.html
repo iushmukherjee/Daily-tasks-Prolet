@@ -12,105 +12,278 @@
     .brand-red { color: #e53238; }
     .bg-brand-red { background-color: #e53238; }
     .border-brand-red { border-color: #e53238; }
+    canvas {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-3 select-none font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-3 select-none font-sans relative overflow-x-hidden">
+
+  <!-- REGISTRATION OVERLAY (DOCTOR NAME ENTRY) -->
+  <div id="regOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-5 text-center">
+      <div class="flex flex-col items-center gap-2">
+        <img src="logo.png" alt="Prolet Logo" class="h-12 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\"text-3xl font-black brand-blue\">Pr<span class=\"brand-red\">O</span>let</span>';">
+        <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest mt-1">IANCON Clinical Assessment Portal</span>
+      </div>
+
+      <div>
+        <h1 class="text-xl font-bold text-white">Daily Task Restorer</h1>
+        <p class="text-xs text-slate-400 mt-1">Register physician details to start the Essential Tremor evaluation & enter the Leaderboard.</p>
+      </div>
+
+      <form id="regForm" onsubmit="registerDoctor(event)" class="flex flex-col gap-3 text-left">
+        <div>
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Doctor Name *</label>
+          <input type="text" id="docNameInput" required placeholder="Dr. Rajesh Sharma" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Hospital / Clinic (Optional)</label>
+          <input type="text" id="docClinicInput" placeholder="Apollo Hospital / AIIMS" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider mt-2">
+          Start Evaluation Protocol ➔
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- Header Banner -->
   <header class="w-full max-w-xl flex justify-between items-center bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-xl">
     <div class="flex items-center gap-3">
       <img src="logo.png" alt="Prolet Logo" class="h-9 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\"text-2xl font-black brand-blue\">Pr<span class=\"brand-red\">O</span>let</span>';">
-      <div>
-        <h1 class="text-xs font-bold text-slate-200">Daily Task Restorer</h1>
-        <p class="text-[10px] text-slate-400">Essential Tremor Motor Precision Assessment</p>
-      </div>
     </div>
-    <span class="text-[10px] bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full font-mono text-cyan-400">IANCON</span>
+    <div class="flex items-center gap-2">
+      <span id="docHeaderTag" class="text-[11px] font-bold text-cyan-400 font-mono hidden">Dr. Anonymous</span>
+      <span id="phaseHeaderBadge" class="text-[10px] bg-red-950/80 border border-red-800/80 px-3 py-1 rounded-full font-mono text-red-400 font-bold uppercase tracking-wider">
+        Phase 1: Pre-Tx
+      </span>
+    </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl my-2 flex flex-col gap-3">
+  <!-- Main Application Container -->
+  <main class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl my-2 flex flex-col gap-3 relative">
     
-    <!-- Task Selection Tabs -->
+    <!-- Task Step Tracker Bar -->
     <div class="grid grid-cols-3 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800/80">
-      <button id="btnTask1" onclick="switchTask('tea')" class="py-2 text-xs font-bold rounded-lg transition bg-brand-blue text-white shadow">
-        1. Pour Tea
-      </button>
-      <button id="btnTask2" onclick="switchTask('spiral')" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
-        2. Spiral
-      </button>
-      <button id="btnTask3" onclick="switchTask('button')" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
-        3. Thread Buttons
-      </button>
+      <div id="tabTask1" class="py-2 text-[11px] font-bold rounded-lg bg-brand-blue text-white shadow-md flex items-center justify-center gap-1">
+        <span>🍵</span> 1. Pour Water
+      </div>
+      <div id="tabTask2" class="py-2 text-[11px] font-bold rounded-lg text-slate-500 flex items-center justify-center gap-1">
+        <span>🌀</span> 2. Spiral Trace
+      </div>
+      <div id="tabTask3" class="py-2 text-[11px] font-bold rounded-lg text-slate-500 flex items-center justify-center gap-1">
+        <span>🔑</span> 3. Key in Lock
+      </div>
     </div>
 
-    <!-- Live Status & Score Bar -->
-    <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs">
+    <!-- Live Status, Timer & Precision Bar -->
+    <div class="flex justify-between items-center bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800">
       <div>
-        <span class="text-slate-400 text-[10px] block">Therapeutic State</span>
-        <span id="statusBadge" class="font-extrabold brand-red uppercase text-xs">Untreated ET Tremor</span>
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Evaluation Mode</span>
+        <span id="statusBadge" class="font-extrabold brand-red uppercase text-xs flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          Untreated ET Tremor
+        </span>
       </div>
+
+      <!-- Task 1 Timer Badge -->
+      <div id="timerContainer" class="text-center">
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Time Remaining</span>
+        <span id="timerDisplay" class="text-base font-extrabold text-amber-400 font-mono">10.0s</span>
+      </div>
+
       <div class="text-right">
-        <span class="text-slate-400 text-[10px] block">Task Precision Score</span>
-        <span id="scoreDisplay" class="text-lg font-black text-white">0%</span>
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Task Precision</span>
+        <span id="scoreDisplay" class="text-xl font-black text-white font-mono">0%</span>
       </div>
     </div>
 
-    <!-- Dynamic Interactive Canvas Area -->
-    <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800 overflow-hidden touch-none cursor-crosshair">
+    <!-- Interactive Canvas Area -->
+    <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800/90 overflow-hidden touch-none cursor-crosshair shadow-inner">
       <canvas id="gameCanvas" class="w-full h-full block"></canvas>
       
-      <!-- Instructional Banner -->
-      <div id="instructionBox" class="absolute top-2 left-2 right-2 bg-slate-900/90 border border-slate-700 p-2 rounded-lg text-center text-xs text-slate-300 pointer-events-none">
-        Press & Hold to pour tea into the moving cup.
+      <!-- Instructional Guide Overlay -->
+      <div id="instructionBox" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 p-2.5 rounded-xl text-center text-xs text-slate-200 pointer-events-none shadow-lg backdrop-blur">
+        Press & Hold to pour water into the glass cup (10s timer).
       </div>
     </div>
 
-    <!-- Treatment Toggle Button -->
-    <button id="proletBtn" onclick="toggleProlet()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-xl transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2 text-sm">
-      <span>⚡ ACTIVATE PROLET (Primidone) EFFICACY</span>
+    <!-- Manual Proceed Button for Tasks 2 & 3 -->
+    <button id="nextTaskBtn" onclick="forceNextTask()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3 rounded-xl transition border border-slate-700 text-xs tracking-wider uppercase">
+      Confirm Task Score & Proceed ➔
     </button>
   </main>
 
-  <!-- Live Waveform Footer -->
+  <!-- Live Thalamocortical Oscillogram Footer -->
   <footer class="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-xl p-3 shadow-lg">
     <div class="flex justify-between items-center mb-1 text-[10px] text-slate-400">
-      <span>Thalamocortical Motor Waveform</span>
-      <span id="waveformLabel" class="brand-red font-bold">Unstabilized Oscillation</span>
+      <span class="font-semibold uppercase tracking-wider">Thalamocortical Waveform</span>
+      <span id="waveformLabel" class="brand-red font-bold">4-7 Hz Kinetic Tremor Active</span>
     </div>
     <div class="h-10 w-full bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
       <canvas id="waveCanvas" class="w-full h-full block"></canvas>
     </div>
   </footer>
 
+  <!-- PHARMACOLOGICAL METABOLISM ANIMATION OVERLAY (SINGLE-GO SEAMLESS) -->
+  <div id="metaOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-between p-4 hidden">
+    <div class="text-center mt-2">
+      <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Mechanism of Action</span>
+      <h2 class="text-xl font-black text-white">Prolet Dual Conversion & GABA-A Binding</h2>
+    </div>
+
+    <!-- Canvas for Unified Molecular Animation -->
+    <div class="w-full max-w-md aspect-square relative my-auto bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center">
+      <canvas id="metaCanvas" class="w-full h-full block"></canvas>
+      <div id="metaStageText" class="absolute bottom-3 left-3 right-3 bg-slate-950/90 border border-slate-800 p-2.5 rounded-xl text-center text-xs font-semibold text-emerald-400">
+        Primidone converting to Phenobarbital & PEMA and binding GABA-A receptors...
+      </div>
+    </div>
+
+    <div class="w-full max-w-md mb-3">
+      <button id="startPostBtn" onclick="startPhase2()" class="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-4 rounded-xl transition transform active:scale-[0.98] shadow-xl shadow-emerald-950/50 text-sm tracking-wide">
+        BEGIN PHASE 2: POST-PROLET EVALUATION ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- FINAL CLINICAL COMPARATIVE REPORT CARD + LEADERBOARD OVERLAY -->
+  <div id="reportOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto hidden">
+    <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
+      
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-lg font-black text-white flex items-center gap-2">
+            <span>📋</span> Performance Report & Leaderboard
+          </h2>
+          <p id="repDocSubtitle" class="text-xs text-slate-400">Physician Performance Summary</p>
+        </div>
+        <img src="logo.png" alt="Prolet" class="h-7 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\"font-black brand-blue\">Pr<span class=\"brand-red\">O</span>let</span>';">
+      </div>
+
+      <!-- Individual Score Comparison Matrix -->
+      <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
+        <div class="grid grid-cols-4 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-800/80 pb-2">
+          <span>Functional Task</span>
+          <span class="text-center brand-red">Pre-Tx</span>
+          <span class="text-center text-emerald-400">Post-Prolet</span>
+          <span class="text-right text-cyan-400">Gain</span>
+        </div>
+
+        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1 border-b border-slate-900">
+          <span class="text-slate-200">1. Pour Water</span>
+          <span id="repPre1" class="text-center font-mono brand-red">0%</span>
+          <span id="repPost1" class="text-center font-mono text-emerald-400">0%</span>
+          <span id="repGain1" class="text-right font-mono text-cyan-400">+0%</span>
+        </div>
+
+        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1 border-b border-slate-900">
+          <span class="text-slate-200">2. Spiral Trace</span>
+          <span id="repPre2" class="text-center font-mono brand-red">0%</span>
+          <span id="repPost2" class="text-center font-mono text-emerald-400">0%</span>
+          <span id="repGain2" class="text-right font-mono text-cyan-400">+0%</span>
+        </div>
+
+        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1">
+          <span class="text-slate-200">3. Key in Lock</span>
+          <span id="repPre3" class="text-center font-mono brand-red">0%</span>
+          <span id="repPost3" class="text-center font-mono text-emerald-400">0%</span>
+          <span id="repGain3" class="text-right font-mono text-cyan-400">+0%</span>
+        </div>
+      </div>
+
+      <!-- Mean Motor Control Summary -->
+      <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Overall Mean Precision</span>
+          <span class="text-xs font-extrabold text-emerald-400">Significant Tremor Reduction</span>
+        </div>
+        <div class="text-right">
+          <span id="repMeanDiff" class="text-2xl font-black text-emerald-400 font-mono">+0%</span>
+          <span class="text-[10px] text-slate-500 block">Improvement</span>
+        </div>
+      </div>
+
+      <!-- IANCON DOCTOR LEADERBOARD TABLE -->
+      <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+            🏆 IANCON Doctor Leaderboard
+          </span>
+          <span class="text-[10px] font-mono text-slate-500">Post-Prolet Scores</span>
+        </div>
+
+        <div id="leaderboardList" class="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
+          <!-- Leaderboard entries dynamically inserted here -->
+        </div>
+      </div>
+
+      <button onclick="restartFullProtocol()" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
+        🔄 Restart Evaluation Protocol (New Participant)
+      </button>
+    </div>
+  </div>
+
   <script>
+    // Canvas & Context Setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
     const waveCtx = waveCanvas.getContext('2d');
+    const metaCanvas = document.getElementById('metaCanvas');
+    const metaCtx = metaCanvas.getContext('2d');
 
-    let currentTask = 'tea';
-    let isProletActive = false;
+    // Doctor & Leaderboard Data
+    let doctorName = "Dr. Participant";
+    let doctorClinic = "";
+    let leaderboard = [];
+
+    // Protocol State
+    let currentPhase = 1; // 1 = Pre-Tx, 2 = Post-Prolet
+    let currentTaskIdx = 1; // 1, 2, 3
     let isInteracting = false;
     let score = 0;
 
-    let pointer = { x: 150, y: 150 };
-    let target = { x: 150, y: 150, radius: 40, angle: 0 };
-    
-    // Task 1 Stats
+    // Scores Database
+    let preScores = { t1: 0, t2: 0, t3: 0 };
+    let postScores = { t1: 0, t2: 0, t3: 0 };
+
+    // Task 1 Timer (10s)
+    let t1Timer = 10.0;
+    let t1TimerInterval = null;
     let teaAttempts = 0;
     let teaHits = 0;
 
-    // Task 2 Stats
+    // Position Coordinates & Objects
+    let pointer = { x: 150, y: 150 };
+    let cup = { x: 150, y: 150, width: 80, height: 100, waterLevel: 0, angle: 0 };
+    let waterDrops = [];
     let spiralPath = [];
     let userPath = [];
 
-    // Task 3 Stats (Precision Needle Threading)
-    let buttonHoles = [];
-    let activeHoleIdx = 0;
-    let buttonPath = [];
-    let threadHits = 0;
-    let threadErrors = 0;
+    // Task 3: Key in Lock Parameters
+    let lock = { x: 150, y: 150, radius: 45 };
+    let key = { x: 150, y: 300, length: 110, width: 22 };
+    let keyTrackingSamples = [];
+
+    function registerDoctor(e) {
+      e.preventDefault();
+      const inputName = document.getElementById('docNameInput').value.trim();
+      const inputClinic = document.getElementById('docClinicInput').value.trim();
+
+      if (inputName) {
+        doctorName = inputName;
+        doctorClinic = inputClinic;
+        document.getElementById('docHeaderTag').innerText = doctorName;
+        document.getElementById('docHeaderTag').classList.remove('hidden');
+        document.getElementById('regOverlay').classList.add('hidden');
+        resizeCanvas();
+      }
+    }
 
     function resizeCanvas() {
       const rect = canvas.parentElement.getBoundingClientRect();
@@ -118,19 +291,21 @@
       canvas.height = rect.height;
       waveCanvas.width = waveCanvas.parentElement.clientWidth;
       waveCanvas.height = waveCanvas.parentElement.clientHeight;
-      initTask();
+      metaCanvas.width = metaCanvas.parentElement.clientWidth;
+      metaCanvas.height = metaCanvas.parentElement.clientHeight;
+      initCurrentTask();
     }
 
-    // Web Audio Sound Synth
+    // Sound Synthesizer Engine
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playTone(freq, duration = 0.1, type = 'sine') {
+    function playTone(freq, duration = 0.08, type = 'sine') {
       try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -139,25 +314,44 @@
       } catch(e){}
     }
 
-    function initTask() {
+    // Task Initialization Routines
+    function initCurrentTask() {
       score = 0;
-      teaAttempts = 0;
-      teaHits = 0;
       userPath = [];
-      buttonPath = [];
-      activeHoleIdx = 0;
-      threadHits = 0;
-      threadErrors = 0;
+      waterDrops = [];
+      keyTrackingSamples = [];
       document.getElementById('scoreDisplay').innerText = '0%';
 
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
 
-      if (currentTask === 'tea') {
-        target = { x: cx, y: cy + 60, radius: 42, angle: 0 };
-        document.getElementById('instructionBox').innerText = 'Press & Hold to pour liquid into the moving cup.';
+      // Update Navigation Tabs
+      ['tabTask1', 'tabTask2', 'tabTask3'].forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (idx + 1 === currentTaskIdx) {
+          el.className = 'py-2 text-[11px] font-bold rounded-lg bg-brand-blue text-white shadow-md flex items-center justify-center gap-1';
+        } else {
+          el.className = 'py-2 text-[11px] font-bold rounded-lg text-slate-500 flex items-center justify-center gap-1';
+        }
+      });
+
+      // Task 1: Pour Water Setup
+      if (currentTaskIdx === 1) {
+        cup = { x: cx - 40, y: cy + 30, width: 80, height: 110, waterLevel: 0, angle: 0 };
+        teaAttempts = 0;
+        teaHits = 0;
+        t1Timer = 10.0;
+        document.getElementById('timerContainer').classList.remove('hidden');
+        document.getElementById('nextTaskBtn').classList.add('hidden');
+        document.getElementById('instructionBox').innerText = 'Press & Hold to pour water cleanly into the moving cup (10.0s Limit).';
+        startT1Timer();
       } 
-      else if (currentTask === 'spiral') {
+      // Task 2: Spiral Trace Setup
+      else if (currentTaskIdx === 2) {
+        clearInterval(t1TimerInterval);
+        document.getElementById('timerContainer').classList.add('hidden');
+        document.getElementById('nextTaskBtn').classList.remove('hidden');
+        document.getElementById('instructionBox').innerText = 'Trace along the spiral path. Press confirm button when finished.';
         spiralPath = [];
         const maxRadius = Math.min(canvas.width, canvas.height) * 0.38;
         for (let i = 0; i < 220; i++) {
@@ -165,57 +359,61 @@
           let r = (maxRadius / 220) * i;
           spiralPath.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
         }
-        document.getElementById('instructionBox').innerText = 'Trace finger/stylus along the spiral baseline path.';
       } 
-      else if (currentTask === 'button') {
-        buttonHoles = [
-          { x: cx, y: cy - 100, radius: 22, passed: false },
-          { x: cx, y: cy, radius: 22, passed: false },
-          { x: cx, y: cy + 100, radius: 22, passed: false }
-        ];
-        document.getElementById('instructionBox').innerText = 'Press & drag the thread through all 3 button holes in sequence without hitting the rims.';
+      // Task 3: Key in Lock Setup
+      else if (currentTaskIdx === 3) {
+        clearInterval(t1TimerInterval);
+        document.getElementById('timerContainer').classList.add('hidden');
+        document.getElementById('nextTaskBtn').classList.remove('hidden');
+        document.getElementById('instructionBox').innerText = 'Drag the key upward to insert it into the lock aperture, then click confirm.';
+        lock = { x: cx, y: cy - 90, radius: 46 };
+        key = { x: cx, y: cy + 110, length: 110, width: 22 };
+        pointer = { x: key.x, y: key.y };
       }
     }
 
-    function switchTask(task) {
-      currentTask = task;
-      ['btnTask1', 'btnTask2', 'btnTask3'].forEach(id => {
-        document.getElementById(id).className = 'py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white';
-      });
+    // 10-Second Countdown Timer Engine
+    function startT1Timer() {
+      clearInterval(t1TimerInterval);
+      t1TimerInterval = setInterval(() => {
+        t1Timer -= 0.1;
+        if (t1Timer <= 0) {
+          t1Timer = 0;
+          clearInterval(t1TimerInterval);
+          
+          // Add a brief 1.5 second pause before auto-advancing from Task 1
+          document.getElementById('instructionBox').innerText = 'Task 1 complete! Preparing Task 2...';
+          setTimeout(() => {
+            if (currentPhase === 1) preScores.t1 = score;
+            else postScores.t1 = score;
 
-      if(task === 'tea') document.getElementById('btnTask1').className = 'py-2 text-xs font-bold rounded-lg transition bg-brand-blue text-white shadow';
-      if(task === 'spiral') document.getElementById('btnTask2').className = 'py-2 text-xs font-bold rounded-lg transition bg-brand-blue text-white shadow';
-      if(task === 'button') document.getElementById('btnTask3').className = 'py-2 text-xs font-bold rounded-lg transition bg-brand-blue text-white shadow';
-
-      initTask();
+            currentTaskIdx = 2;
+            initCurrentTask();
+          }, 1500);
+        }
+        document.getElementById('timerDisplay').innerText = t1Timer.toFixed(1) + 's';
+      }, 100);
     }
 
-    function toggleProlet() {
-      isProletActive = !isProletActive;
-      const badge = document.getElementById('statusBadge');
-      const label = document.getElementById('waveformLabel');
-      const btn = document.getElementById('proletBtn');
-
-      if (isProletActive) {
-        badge.innerText = 'PROLET ACTIVE (Therapeutic Baseline)';
-        badge.className = 'font-extrabold text-emerald-400 uppercase text-xs';
-        label.innerText = 'Smooth Thalamic Signal (Prolet)';
-        label.className = 'text-emerald-400 font-bold';
-        btn.innerHTML = '<span>RESET TO UNTREATED ET STATE</span>';
-        btn.className = 'w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold py-3.5 rounded-xl transition border border-slate-700 text-sm';
-        playTone(650, 0.2, 'triangle');
-      } else {
-        badge.innerText = 'Untreated ET Tremor';
-        badge.className = 'font-extrabold brand-red uppercase text-xs';
-        label.innerText = 'Unstabilized Oscillation';
-        label.className = 'brand-red font-bold';
-        btn.innerHTML = '<span>⚡ ACTIVATE PROLET (Primidone) EFFICACY</span>';
-        btn.className = 'w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-xl transition transform active:scale-95 shadow-lg text-sm';
-        playTone(220, 0.2, 'sawtooth');
+    function forceNextTask() {
+      if (currentTaskIdx === 2) {
+        if (currentPhase === 1) preScores.t2 = score;
+        else postScores.t2 = score;
+        currentTaskIdx = 3;
+        initCurrentTask();
+      } else if (currentTaskIdx === 3) {
+        if (currentPhase === 1) {
+          preScores.t3 = score;
+          openMetabolismAnimation();
+        } else {
+          postScores.t3 = score;
+          showFinalReport();
+        }
       }
-      initTask();
     }
 
+    // Natural 4-7Hz Tremor Math
+    let tremorTime = 0;
     function updatePointer(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -224,29 +422,31 @@
       let rawX = clientX - rect.left;
       let rawY = clientY - rect.top;
 
-      // Tremor Jitter Calculation
-      if (!isProletActive && isInteracting) {
-        let jitterX = (Math.random() - 0.5) * 36;
-        let jitterY = (Math.random() - 0.5) * 36;
-        pointer.x = rawX + jitterX;
-        pointer.y = rawY + jitterY;
+      if (currentPhase === 1 && isInteracting) {
+        tremorTime += 0.25;
+        let sineOffsetX = Math.sin(tremorTime * 4.8) * 11 + (Math.random() - 0.5) * 5;
+        let sineOffsetY = Math.cos(tremorTime * 5.4) * 11 + (Math.random() - 0.5) * 5;
+        pointer.x = rawX + sineOffsetX;
+        pointer.y = rawY + sineOffsetY;
       } else {
         pointer.x = rawX;
         pointer.y = rawY;
       }
 
       if (isInteracting) {
-        if (currentTask === 'spiral') {
+        if (currentTaskIdx === 2) {
           userPath.push({ x: pointer.x, y: pointer.y });
           calculateSpiralScore();
-        } else if (currentTask === 'button') {
-          buttonPath.push({ x: pointer.x, y: pointer.y });
-          calculateThreadingScore();
+        } else if (currentTaskIdx === 3) {
+          key.x = pointer.x;
+          key.y = pointer.y;
+          calculateKeyScore();
         }
       }
     }
 
     function startInteract(e) {
+      if (t1Timer <= 0 && currentTaskIdx === 1) return;
       isInteracting = true;
       updatePointer(e);
     }
@@ -263,10 +463,9 @@
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (isInteracting) updatePointer(e); });
     canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopInteract(); });
 
-    // Stricter Spiral Math for ET vs Prolet
+    // Spiral Scoring Logic
     function calculateSpiralScore() {
       if (userPath.length < 5 || spiralPath.length === 0) return;
-      
       let totalErr = 0;
       userPath.forEach(pt => {
         let minDist = Infinity;
@@ -279,90 +478,193 @@
 
       let avgErr = totalErr / userPath.length;
 
-      // Stricter Penalty Curve
-      if (!isProletActive) {
-        // High penalty for Tremor Jitter
-        score = Math.max(12, Math.min(48, Math.round(100 - (avgErr * 6.5))));
+      if (currentPhase === 1) {
+        score = Math.max(22, Math.min(46, Math.round(100 - (avgErr * 5.0))));
       } else {
-        // High accuracy rewarded for Smooth Stroke
-        score = Math.max(70, Math.min(98, Math.round(100 - (avgErr * 2.0))));
+        score = Math.max(82, Math.min(97, Math.round(100 - (avgErr * 1.6))));
+      }
+      document.getElementById('scoreDisplay').innerText = score + '%';
+    }
+
+    // Key Task Scoring Engine
+    function calculateKeyScore() {
+      let keyTipX = key.x;
+      let keyTipY = key.y - key.length / 2;
+
+      let distance = Math.hypot(keyTipX - lock.x, keyTipY - lock.y);
+      keyTrackingSamples.push({ dist: distance, x: keyTipX, y: keyTipY });
+
+      if (keyTrackingSamples.length > 80) keyTrackingSamples.shift();
+
+      let avgDistance = keyTrackingSamples.reduce((acc, s) => acc + s.dist, 0) / keyTrackingSamples.length;
+
+      let varianceSum = keyTrackingSamples.reduce((acc, s) => {
+        return acc + Math.pow(s.dist - avgDistance, 2);
+      }, 0);
+      let jitterVariance = Math.sqrt(varianceSum / keyTrackingSamples.length);
+
+      if (currentPhase === 1) {
+        let proximityFactor = Math.max(0, 100 - (avgDistance * 0.45));
+        let stabilityPenalty = jitterVariance * 4.2;
+        score = Math.max(25, Math.min(48, Math.round(proximityFactor - stabilityPenalty)));
+      } else {
+        let proximityFactor = Math.max(0, 100 - (avgDistance * 0.15));
+        let stabilityPenalty = jitterVariance * 0.8;
+        score = Math.max(82, Math.min(96, Math.round(proximityFactor - stabilityPenalty)));
       }
 
       document.getElementById('scoreDisplay').innerText = score + '%';
     }
 
-    // Button Threading Logic
-    function calculateThreadingScore() {
-      if (activeHoleIdx >= buttonHoles.length) return;
+    // Render Realistic Water Glass
+    function drawRealisticCup(x, y, w, h, waterPct) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, [5, 5, 15, 15]);
+      ctx.fill();
 
-      let targetHole = buttonHoles[activeHoleIdx];
-      let dist = Math.hypot(pointer.x - targetHole.x, pointer.y - targetHole.y);
+      if (waterPct > 0) {
+        let waterHeight = (h - 10) * (waterPct / 100);
+        let waterY = y + h - waterHeight - 5;
 
-      if (dist <= targetHole.radius) {
-        threadHits++;
-        if (dist <= targetHole.radius * 0.6) {
-          targetHole.passed = true;
-          activeHoleIdx++;
-          playTone(850, 0.15, 'triangle');
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x + 4, y + 4, w - 8, h - 8, [2, 2, 12, 12]);
+        ctx.clip();
+
+        let grad = ctx.createLinearGradient(0, waterY, 0, y + h);
+        grad.addColorStop(0, 'rgba(56, 189, 248, 0.85)');
+        grad.addColorStop(1, 'rgba(14, 116, 144, 0.95)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        ctx.lineTo(x, waterY);
+
+        let waveFreq = Date.now() * 0.005;
+        for (let i = 0; i <= w; i += 5) {
+          let waveY = waterY + Math.sin(waveFreq + i * 0.1) * 3;
+          ctx.lineTo(x + i, waveY);
         }
-      } else {
-        threadErrors++;
-        if (threadErrors % 6 === 0) playTone(180, 0.08, 'sawtooth');
+
+        ctx.lineTo(x + w, y + h);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.restore();
       }
 
-      let totalSteps = Math.max(1, threadHits + threadErrors);
-      score = Math.min(100, Math.round((threadHits / totalSteps) * 100));
-      if (!isProletActive) score = Math.min(score, 35); // Cap untreated score
-      document.getElementById('scoreDisplay').innerText = score + '%';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, [5, 5, 15, 15]);
+      ctx.stroke();
     }
 
-    // Game Loop & Canvas Renderer
+    // Render Key and Lock Visuals
+    function drawLockAndKey() {
+      // Draw Brass Lock Faceplate
+      let lockGrad = ctx.createRadialGradient(lock.x - 10, lock.y - 10, 5, lock.x, lock.y, lock.radius);
+      lockGrad.addColorStop(0, '#fef08a');
+      lockGrad.addColorStop(1, '#ca8a04');
+
+      ctx.fillStyle = lockGrad;
+      ctx.beginPath();
+      ctx.arc(lock.x, lock.y, lock.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Lock Center Keyhole Slot
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(lock.x, lock.y - 6, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(lock.x - 5, lock.y - 6, 10, 22);
+
+      // Draw Key
+      ctx.save();
+      let keyTipX = key.x;
+      let keyTipY = key.y - key.length / 2;
+
+      let keyGrad = ctx.createLinearGradient(key.x - 10, key.y, key.x + 10, key.y);
+      keyGrad.addColorStop(0, '#e2e8f0');
+      keyGrad.addColorStop(1, '#64748b');
+
+      ctx.fillStyle = keyGrad;
+      ctx.fillRect(key.x - 4, keyTipY, 8, key.length - 30);
+      ctx.fillRect(key.x + 4, keyTipY + 8, 8, 5);
+      ctx.fillRect(key.x + 4, keyTipY + 22, 10, 5);
+
+      ctx.beginPath();
+      ctx.arc(key.x, key.y + 20, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Main Canvas Render Loop
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Task 1: Pour Tea
-      if (currentTask === 'tea') {
-        target.angle += 0.02;
-        target.x = (canvas.width / 2) + Math.sin(target.angle) * 80;
+      // Task 1: Pour Water
+      if (currentTaskIdx === 1) {
+        cup.angle += 0.018;
+        cup.x = (canvas.width / 2 - cup.width / 2) + Math.sin(cup.angle) * 90;
 
-        ctx.beginPath();
-        ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#1e293b';
-        ctx.fill();
-        ctx.strokeStyle = '#1d52a2';
-        ctx.lineWidth = 4;
-        ctx.stroke();
+        drawRealisticCup(cup.x, cup.y, cup.width, cup.height, cup.waterLevel);
 
-        if (isInteracting) {
+        if (isInteracting && t1Timer > 0) {
           teaAttempts++;
-          ctx.beginPath();
-          ctx.moveTo(pointer.x, 0);
-          ctx.lineTo(pointer.x, canvas.height);
-          ctx.strokeStyle = isProletActive ? '#22d3ee' : '#e53238';
-          ctx.lineWidth = isProletActive ? 6 : 14;
-          ctx.stroke();
+          waterDrops.push({
+            x: pointer.x + (Math.random() - 0.5) * (currentPhase === 2 ? 2 : 8),
+            y: pointer.y,
+            vy: 8 + Math.random() * 4
+          });
 
-          let dist = Math.abs(pointer.x - target.x);
-          if (dist < target.radius) {
+          let cupTargetX = cup.x + cup.width / 2;
+          let dist = Math.abs(pointer.x - cupTargetX);
+
+          if (dist < cup.width / 2) {
             teaHits++;
-            if (teaAttempts % 4 === 0) playTone(450, 0.05);
+            cup.waterLevel = Math.min(100, cup.waterLevel + 0.3);
+            if (teaAttempts % 5 === 0) playTone(500, 0.04);
           }
-          
+
           let rawRatio = (teaHits / Math.max(1, teaAttempts));
-          score = isProletActive ? Math.min(96, Math.round(rawRatio * 100)) : Math.min(38, Math.round(rawRatio * 50));
+          score = currentPhase === 2 ? Math.min(97, Math.round(rawRatio * 100)) : Math.min(39, Math.round(rawRatio * 45));
           document.getElementById('scoreDisplay').innerText = score + '%';
+        }
+
+        for (let i = waterDrops.length - 1; i >= 0; i--) {
+          let d = waterDrops[i];
+          d.y += d.vy;
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          if (d.y > canvas.height) waterDrops.splice(i, 1);
         }
       }
 
-      // Task 2: Spiral
-      else if (currentTask === 'spiral') {
+      // Task 2: Spiral Trace
+      else if (currentTaskIdx === 2) {
         ctx.beginPath();
         spiralPath.forEach((pt, i) => {
           if (i === 0) ctx.moveTo(pt.x, pt.y);
           else ctx.lineTo(pt.x, pt.y);
         });
         ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 14;
+        ctx.lineWidth = 12;
         ctx.stroke();
 
         if (userPath.length > 1) {
@@ -371,56 +673,21 @@
             if (i === 0) ctx.moveTo(pt.x, pt.y);
             else ctx.lineTo(pt.x, pt.y);
           });
-          ctx.strokeStyle = isProletActive ? '#22d3ee' : '#e53238';
-          ctx.lineWidth = 4;
+          ctx.strokeStyle = currentPhase === 2 ? '#22d3ee' : '#e53238';
+          ctx.lineWidth = 3.5;
           ctx.stroke();
         }
       }
 
-      // Task 3: Threading Shirt Buttons
-      else if (currentTask === 'button') {
-        // Draw Shirt Placket Line
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 40);
-        ctx.lineTo(canvas.width / 2, canvas.height - 40);
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 6;
-        ctx.stroke();
-
-        // Draw Buttons
-        buttonHoles.forEach((hole, idx) => {
-          ctx.beginPath();
-          ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
-          ctx.fillStyle = hole.passed ? '#10b981' : (idx === activeHoleIdx ? '#1e293b' : '#0f172a');
-          ctx.fill();
-          ctx.strokeStyle = hole.passed ? '#34d399' : (idx === activeHoleIdx ? '#e53238' : '#475569');
-          ctx.lineWidth = idx === activeHoleIdx ? 4 : 2;
-          ctx.stroke();
-
-          // Button Center Hole
-          ctx.beginPath();
-          ctx.arc(hole.x, hole.y, hole.radius * 0.4, 0, Math.PI * 2);
-          ctx.fillStyle = '#020617';
-          ctx.fill();
-        });
-
-        // Draw Thread Stroke
-        if (buttonPath.length > 1) {
-          ctx.beginPath();
-          buttonPath.forEach((pt, i) => {
-            if (i === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
-          });
-          ctx.strokeStyle = isProletActive ? '#22d3ee' : '#e53238';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        }
+      // Task 3: Key in Lock
+      else if (currentTaskIdx === 3) {
+        drawLockAndKey();
       }
 
-      // Draw Cursor Pointer Thread
+      // Cursor Pointer
       ctx.beginPath();
-      ctx.arc(pointer.x, pointer.y, 7, 0, Math.PI * 2);
-      ctx.fillStyle = isProletActive ? '#10b981' : '#e53238';
+      ctx.arc(pointer.x, pointer.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = currentPhase === 2 ? '#10b981' : '#e53238';
       ctx.fill();
 
       renderOscillogram();
@@ -432,17 +699,17 @@
     function renderOscillogram() {
       waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
       waveCtx.beginPath();
-      waveCtx.strokeStyle = isProletActive ? '#10b981' : '#e53238';
+      waveCtx.strokeStyle = currentPhase === 2 ? '#10b981' : '#e53238';
       waveCtx.lineWidth = 2;
 
-      waveOffset += 0.15;
+      waveOffset += 0.12;
       const cy = waveCanvas.height / 2;
 
       for (let x = 0; x < waveCanvas.width; x++) {
-        let amp = isProletActive ? 3 : 14;
-        let freq = isProletActive ? 0.05 : 0.25;
+        let amp = currentPhase === 2 ? 2.5 : 11;
+        let freq = currentPhase === 2 ? 0.04 : 0.18;
         let y = cy + Math.sin(x * freq + waveOffset) * amp;
-        if (!isProletActive) y += (Math.random() - 0.5) * 6;
+        if (currentPhase === 1) y += Math.sin(x * 0.4 + waveOffset * 2) * 3;
 
         if (x === 0) waveCtx.moveTo(x, y);
         else waveCtx.lineTo(x, y);
@@ -450,9 +717,198 @@
       waveCtx.stroke();
     }
 
+    // SINGLE-GO SEAMLESS METABOLISM ANIMATION ENGINE ON CANVAS
+    let metaAnimTime = 0;
+    function openMetabolismAnimation() {
+      document.getElementById('metaOverlay').classList.remove('hidden');
+      metaAnimTime = 0;
+      requestAnimationFrame(renderSeamlessMetaAnimation);
+    }
+
+    function renderSeamlessMetaAnimation() {
+      if (document.getElementById('metaOverlay').classList.contains('hidden')) return;
+
+      metaCtx.clearRect(0, 0, metaCanvas.width, metaCanvas.height);
+      metaAnimTime += 0.03;
+
+      const cx = metaCanvas.width / 2;
+      const cy = metaCanvas.height / 2;
+
+      // 1. Central Primidone Molecule Capsule
+      let capsuleY = cy - 70 + Math.sin(metaAnimTime * 2) * 6;
+      metaCtx.save();
+      metaCtx.translate(cx, capsuleY);
+      metaCtx.rotate(Math.sin(metaAnimTime) * 0.1);
+
+      metaCtx.fillStyle = '#1d52a2';
+      metaCtx.beginPath();
+      metaCtx.roundRect(-42, -18, 42, 36, [18, 0, 0, 18]);
+      metaCtx.fill();
+
+      metaCtx.fillStyle = '#e53238';
+      metaCtx.beginPath();
+      metaCtx.roundRect(0, -18, 42, 36, [0, 18, 18, 0]);
+      metaCtx.fill();
+
+      metaCtx.fillStyle = '#ffffff';
+      metaCtx.font = 'bold 11px sans-serif';
+      metaCtx.fillText('PRIMITONE', -34, 4);
+
+      metaCtx.restore();
+
+      // 2. Active Metabolites Splitting and Floating Downward (Phenobarbital & PEMA)
+      let splitFactor = Math.min(1.0, metaAnimTime * 0.45);
+
+      let p1X = cx - (75 * splitFactor);
+      let p1Y = capsuleY + (100 * splitFactor);
+
+      let p2X = cx + (75 * splitFactor);
+      let p2Y = capsuleY + (100 * splitFactor);
+
+      // Phenobarbital Node
+      metaCtx.fillStyle = '#38bdf8';
+      metaCtx.beginPath();
+      metaCtx.arc(p1X, p1Y, 20, 0, Math.PI * 2);
+      metaCtx.fill();
+      metaCtx.fillStyle = '#0f172a';
+      metaCtx.font = 'bold 10px sans-serif';
+      metaCtx.fillText('PB', p1X - 8, p1Y + 3);
+
+      // PEMA Node
+      metaCtx.fillStyle = '#34d399';
+      metaCtx.beginPath();
+      metaCtx.arc(p2X, p2Y, 20, 0, Math.PI * 2);
+      metaCtx.fill();
+      metaCtx.fillStyle = '#0f172a';
+      metaCtx.fillText('PEMA', p2X - 15, p2Y + 3);
+
+      // 3. GABA-A Synaptic Receptor Target at Bottom
+      let receptorY = cy + 90;
+      metaCtx.strokeStyle = '#475569';
+      metaCtx.lineWidth = 10;
+      metaCtx.beginPath();
+      metaCtx.arc(cx, receptorY, 60, Math.PI, 0);
+      metaCtx.stroke();
+
+      // GABA-A Binding Pockets
+      metaCtx.fillStyle = '#1e293b';
+      metaCtx.beginPath();
+      metaCtx.arc(cx - 40, receptorY - 25, 14, 0, Math.PI * 2);
+      metaCtx.arc(cx + 40, receptorY - 25, 14, 0, Math.PI * 2);
+      metaCtx.fill();
+
+      // Binding Energy Sparks when metabolites reach receptors
+      if (metaAnimTime > 2.2) {
+        metaCtx.strokeStyle = '#22d3ee';
+        metaCtx.lineWidth = 3;
+        metaCtx.beginPath();
+        metaCtx.arc(cx - 40, receptorY - 25, 18 + Math.sin(metaAnimTime * 12) * 4, 0, Math.PI * 2);
+        metaCtx.arc(cx + 40, receptorY - 25, 18 + Math.cos(metaAnimTime * 12) * 4, 0, Math.PI * 2);
+        metaCtx.stroke();
+      }
+
+      requestAnimationFrame(renderSeamlessMetaAnimation);
+    }
+
+    function startPhase2() {
+      document.getElementById('metaOverlay').classList.add('hidden');
+      currentPhase = 2;
+      currentTaskIdx = 1;
+
+      // Update Phase Banner
+      const headerBadge = document.getElementById('phaseHeaderBadge');
+      headerBadge.innerText = 'Phase 2: Post-Prolet';
+      headerBadge.className = 'text-[10px] bg-emerald-950/80 border border-emerald-800/80 px-3 py-1 rounded-full font-mono text-emerald-400 font-bold uppercase tracking-wider';
+
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PROLET ACTIVE (Stabilized)';
+      statusBadge.className = 'font-extrabold text-emerald-400 uppercase text-xs flex items-center gap-1.5';
+
+      const label = document.getElementById('waveformLabel');
+      label.innerText = 'Synchronized Thalamic Signal (Prolet)';
+      label.className = 'text-emerald-400 font-bold';
+
+      initCurrentTask();
+    }
+
+    function showFinalReport() {
+      document.getElementById('reportOverlay').classList.remove('hidden');
+
+      document.getElementById('repDocSubtitle').innerText = `${doctorName} ${doctorClinic ? '(' + doctorClinic + ')' : ''}`;
+
+      document.getElementById('repPre1').innerText = preScores.t1 + '%';
+      document.getElementById('repPost1').innerText = postScores.t1 + '%';
+      document.getElementById('repGain1').innerText = '+' + (postScores.t1 - preScores.t1) + '%';
+
+      document.getElementById('repPre2').innerText = preScores.t2 + '%';
+      document.getElementById('repPost2').innerText = postScores.t2 + '%';
+      document.getElementById('repGain2').innerText = '+' + (postScores.t2 - preScores.t2) + '%';
+
+      document.getElementById('repPre3').innerText = preScores.t3 + '%';
+      document.getElementById('repPost3').innerText = postScores.t3 + '%';
+      document.getElementById('repGain3').innerText = '+' + (postScores.t3 - preScores.t3) + '%';
+
+      let preMean = (preScores.t1 + preScores.t2 + preScores.t3) / 3;
+      let postMean = (postScores.t1 + postScores.t2 + postScores.t3) / 3;
+      let meanGain = Math.round(postMean - preMean);
+
+      document.getElementById('repMeanDiff').innerText = '+' + meanGain + '%';
+
+      // Record to Leaderboard
+      let postMeanRound = Math.round(postMean);
+      leaderboard.push({
+        name: doctorName,
+        clinic: doctorClinic,
+        score: postMeanRound
+      });
+
+      // Sort Leaderboard Highest First
+      leaderboard.sort((a, b) => b.score - a.score);
+
+      // Render Leaderboard Table
+      const listContainer = document.getElementById('leaderboardList');
+      listContainer.innerHTML = '';
+
+      leaderboard.forEach((entry, idx) => {
+        let badgeColor = idx === 0 ? 'bg-amber-500 text-slate-950 font-black' : (idx === 1 ? 'bg-slate-300 text-slate-950 font-bold' : (idx === 2 ? 'bg-amber-700 text-white font-bold' : 'bg-slate-800 text-slate-400 font-mono'));
+        
+        let row = document.createElement('div');
+        row.className = 'flex justify-between items-center bg-slate-900 border border-slate-800/80 px-3 py-1.5 rounded-lg text-xs';
+        row.innerHTML = `
+          <div class="flex items-center gap-2 overflow-hidden">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${badgeColor}">${idx + 1}</span>
+            <span class="font-bold text-slate-200 truncate">${entry.name} <span class="text-[10px] text-slate-500 font-normal">${entry.clinic}</span></span>
+          </div>
+          <span class="font-mono font-black text-emerald-400">${entry.score}%</span>
+        `;
+        listContainer.appendChild(row);
+      });
+    }
+
+    function restartFullProtocol() {
+      document.getElementById('reportOverlay').classList.add('hidden');
+      document.getElementById('regOverlay').classList.remove('hidden');
+
+      currentPhase = 1;
+      currentTaskIdx = 1;
+
+      const headerBadge = document.getElementById('phaseHeaderBadge');
+      headerBadge.innerText = 'Phase 1: Pre-Tx';
+      headerBadge.className = 'text-[10px] bg-red-950/80 border border-red-800/80 px-3 py-1 rounded-full font-mono text-red-400 font-bold uppercase tracking-wider';
+
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Untreated ET Tremor';
+      statusBadge.className = 'font-extrabold brand-red uppercase text-xs flex items-center gap-1.5';
+
+      const label = document.getElementById('waveformLabel');
+      label.innerText = '4-7 Hz Kinetic Tremor Active';
+      label.className = 'brand-red font-bold';
+
+      initCurrentTask();
+    }
+
     window.addEventListener('resize', resizeCanvas);
     window.onload = () => {
-      resizeCanvas();
       render();
     };
   </script>
