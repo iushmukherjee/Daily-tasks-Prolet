@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <!-- Header Banner with Brand Logo and High Contrast Solid White Background Wrapper -->
+  <!-- Header Banner with Logo and High Contrast White Wrapper -->
   <header class="w-full max-w-xl flex justify-between items-center bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-xl">
     <div class="bg-white px-3 py-1.5 rounded-xl shadow-md border border-slate-200 flex items-center justify-center">
       <img src="logo.png" alt="Prolet Logo" class="h-7 w-auto object-contain" />
@@ -101,8 +101,8 @@
       </div>
     </div>
 
-    <!-- Interactive Canvas Area -->
-    <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800/90 overflow-hidden touch-none cursor-crosshair shadow-inner">
+    <!-- Interactive Canvas Area with Flash Overlay Support -->
+    <div id="canvasWrapper" class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800/90 overflow-hidden touch-none cursor-crosshair shadow-inner transition-colors duration-75">
       <canvas id="gameCanvas" class="w-full h-full block"></canvas>
       
       <!-- Instructional Guide Overlay -->
@@ -229,8 +229,11 @@
     const ctx = canvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
     const waveCtx = waveCanvas.getContext('2d');
+    const canvasWrapper = document.getElementById('canvasWrapper');
 
     let audioCtx = null;
+    let waterSoundNode = null;
+    let waterGainNode = null;
 
     function initAudio() {
       if (!audioCtx) {
@@ -255,6 +258,50 @@
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // Continuous Water Pouring Synthesizer (White noise generator through bandpass filter)
+    function startWaterSound() {
+      try {
+        initAudio();
+        if (!audioCtx || waterSoundNode) return;
+
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        waterSoundNode = audioCtx.createBufferSource();
+        waterSoundNode.buffer = buffer;
+        waterSoundNode.loop = true;
+
+        let filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        filter.Q.setValueAtTime(1.5, audioCtx.currentTime);
+
+        waterGainNode = audioCtx.createGain();
+        waterGainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+        waterSoundNode.connect(filter);
+        filter.connect(waterGainNode);
+        waterGainNode.connect(audioCtx.destination);
+
+        waterSoundNode.start();
+      } catch (e) {}
+    }
+
+    function stopWaterSound() {
+      try {
+        if (waterSoundNode) {
+          waterSoundNode.stop();
+          waterSoundNode.disconnect();
+          waterSoundNode = null;
+          waterGainNode = null;
+        }
       } catch (e) {}
     }
 
@@ -349,6 +396,7 @@
       waterDrops = [];
       threadAttempts = 0;
       threadHits = 0;
+      stopWaterSound();
       document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
 
       const cx = canvas.width / 2;
@@ -404,6 +452,7 @@
         if (t1Timer <= 0) {
           t1Timer = 0;
           clearInterval(t1TimerInterval);
+          stopWaterSound();
           
           playTone(440, 'triangle', 0.3, 0.08);
           triggerHaptic([30, 50, 30]);
@@ -425,6 +474,7 @@
     }
 
     function forceNextTask() {
+      stopWaterSound();
       playTone(523.25, 'sine', 0.2, 0.08);
       triggerHaptic(40);
 
@@ -473,6 +523,11 @@
       updatePointer(e);
       playTone(330, 'sine', 0.05, 0.03);
       triggerHaptic(15);
+
+      if (currentTaskIdx === 1) {
+        startWaterSound();
+      }
+
       const box = document.getElementById('instructionBox');
       if (box) box.classList.add('opacity-0');
     }
@@ -484,6 +539,9 @@
 
     function handleEndInteraction() {
       isInteracting = false;
+      if (currentTaskIdx === 1) {
+        stopWaterSound();
+      }
     }
 
     canvas.addEventListener('mousedown', handleStartInteraction);
@@ -495,6 +553,7 @@
     window.addEventListener('touchend', handleEndInteraction);
 
     function openMetabolismAnimation() {
+      stopWaterSound();
       playTone(659.25, 'triangle', 0.4, 0.1);
       triggerHaptic([50, 100, 50]);
       const metaOverlay = document.getElementById('metaOverlay');
@@ -531,6 +590,7 @@
     }
 
     function showFinalReport() {
+      stopWaterSound();
       playTone(783.99, 'sine', 0.4, 0.1);
       triggerHaptic([40, 40, 80]);
 
@@ -668,11 +728,14 @@
     }
 
     let phaseTime = 0;
+    let spiralFlashCounter = 0;
+
     function render() {
       phaseTime += 0.05;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (currentTaskIdx === 1) {
+        canvasWrapper.style.backgroundColor = '#020617';
         cup.x += cup.speed * cup.dir;
         const margin = cup.width / 2 + 25;
         if (cup.x > canvas.width - margin) {
@@ -718,6 +781,19 @@
         currentLiveScore = mapPerformanceToScore(perf);
       }
       else if (currentTaskIdx === 2) {
+        // Spiral Trace Level with Pre-Treatment Flashes & Haptics
+        if (currentPhase === 1 && isInteracting) {
+          spiralFlashCounter++;
+          if (spiralFlashCounter % 15 === 0) {
+            canvasWrapper.style.backgroundColor = '#450a0a'; // Dark Red flash
+            triggerHaptic(25);
+          } else if (spiralFlashCounter % 15 === 8) {
+            canvasWrapper.style.backgroundColor = '#020617';
+          }
+        } else {
+          canvasWrapper.style.backgroundColor = '#020617';
+        }
+
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 12;
         ctx.lineCap = 'round';
@@ -773,6 +849,7 @@
         ctx.fill();
       }
       else if (currentTaskIdx === 3) {
+        canvasWrapper.style.backgroundColor = '#020617';
         const eyeX = needleTarget.x;
         const eyeY = needleTarget.y;
 
