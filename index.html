@@ -75,7 +75,7 @@
         <span>🌀</span> 2. Spiral Trace
       </div>
       <div id="tabTask3" class="py-2 text-[11px] font-bold rounded-lg text-slate-500 flex items-center justify-center gap-1">
-        <span>🔑</span> 3. Key in Lock
+        <span>🪡</span> 3. Thread Needle
       </div>
     </div>
 
@@ -185,7 +185,7 @@
         </div>
 
         <div class="grid grid-cols-4 text-xs font-semibold items-center py-1">
-          <span class="text-slate-200">3. Key in Lock</span>
+          <span class="text-slate-200">3. Thread Needle</span>
           <span id="repPre3" class="text-center font-mono brand-red">0%</span>
           <span id="repPost3" class="text-center font-mono text-emerald-400">0%</span>
           <span id="repGain3" class="text-right font-mono text-cyan-400">+0%</span>
@@ -251,7 +251,7 @@
     let waterDrops = [];
     let spiralPath = [];
     let userPath = [];
-    let lock = { x: 150, y: 150, radius: 45 };
+    let needleTarget = { x: 150, y: 120, eyeRadius: 18 };
 
     function registerDoctor(e) {
       if (e) e.preventDefault();
@@ -268,17 +268,12 @@
       }
     }
 
-    // MAP PERFORMANCE TO PRE-TX (20-60%) OR POST-PROLET (75-100%)
     function mapPerformanceToScore(accuracyRatio) {
-      // accuracyRatio ranges from 0.0 to 1.0 based on precision/performance
       const clampedRatio = Math.max(0, Math.min(1, accuracyRatio));
-      
       if (currentPhase === 1) {
-        // Pre-treatment: 20% to 60%
-        return Math.round(20 + (clampedRatio * 40));
+        return Math.round(20 + (clampedRatio * 40)); // Pre-Tx: 20% to 60%
       } else {
-        // Post-Prolet: 75% to 100%
-        return Math.round(75 + (clampedRatio * 25));
+        return Math.round(75 + (clampedRatio * 25)); // Post-Tx: 75% to 100%
       }
     }
 
@@ -346,9 +341,9 @@
         clearInterval(t1TimerInterval);
         document.getElementById('timerContainer').classList.add('hidden');
         document.getElementById('nextTaskBtn').classList.remove('hidden');
-        resetInstructionBox('Drag the key upward to insert it into the keyhole, then click confirm.');
-        lock = { x: cx, y: cy - 90, radius: 46 };
-        pointer = { x: cx, y: cy + 110 };
+        resetInstructionBox('Drag the thread tip cleanly through the eye of the needle.');
+        needleTarget = { x: cx, y: cy - 70, eyeRadius: 18 };
+        pointer = { x: cx, y: cy + 120 };
       }
     }
 
@@ -362,7 +357,6 @@
           
           resetInstructionBox('Task 1 complete! Preparing Task 2...');
           
-          // Lock final task 1 performance score
           if (currentPhase === 1) {
             preScores.t1 = currentLiveScore;
           } else {
@@ -426,287 +420,21 @@
       if (box) box.classList.add('opacity-0');
     }
 
-    function openMetabolismAnimation() {
-      document.getElementById('metaOverlay').classList.remove('hidden');
+    function handleMoveInteraction(e) {
+      if (!isInteracting) return;
+      updatePointer(e);
     }
 
-    function startPhase2() {
-      document.getElementById('metaOverlay').classList.add('hidden');
-      currentPhase = 2;
-      currentTaskIdx = 1;
-      document.getElementById('phaseHeaderBadge').innerText = "Phase 2: Post-Prolet";
-      document.getElementById('phaseHeaderBadge').className = "text-[10px] bg-emerald-950/80 border border-emerald-800/80 px-3 py-1 rounded-full font-mono text-emerald-400 font-bold uppercase tracking-wider";
-      document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Post-Treatment Steady State`;
-      document.getElementById('statusBadge').className = "font-extrabold text-emerald-400 uppercase text-xs flex items-center gap-1.5";
-      document.getElementById('waveformLabel').innerText = "Normal Sensorimotor Waveform";
-      document.getElementById('waveformLabel').className = "text-emerald-400 font-bold";
-      initCurrentTask();
+    function handleEndInteraction() {
+      isInteracting = false;
     }
 
-    function showFinalReport() {
-      document.getElementById('reportOverlay').classList.remove('hidden');
-      document.getElementById('repDocSubtitle').innerText = doctorName + (doctorClinic ? ` (${doctorClinic})` : '');
+    canvas.addEventListener('mousedown', handleStartInteraction);
+    canvas.addEventListener('mousemove', handleMoveInteraction);
+    window.addEventListener('mouseup', handleEndInteraction);
 
-      document.getElementById('repPre1').innerText = preScores.t1 + '%';
-      document.getElementById('repPost1').innerText = postScores.t1 + '%';
-      document.getElementById('repGain1').innerText = '+' + Math.max(0, postScores.t1 - preScores.t1) + '%';
+    canvas.addEventListener('touchstart', (e) => { handleStartInteraction(e); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { handleMoveInteraction(e); e.preventDefault(); }, { passive: false });
+    window.addEventListener('touchend', handleEndInteraction);
 
-      document.getElementById('repPre2').innerText = preScores.t2 + '%';
-      document.getElementById('repPost2').innerText = postScores.t2 + '%';
-      document.getElementById('repGain2').innerText = '+' + Math.max(0, postScores.t2 - preScores.t2) + '%';
-
-      document.getElementById('repPre3').innerText = preScores.t3 + '%';
-      document.getElementById('repPost3').innerText = postScores.t3 + '%';
-      document.getElementById('repGain3').innerText = '+' + Math.max(0, postScores.t3 - preScores.t3) + '%';
-
-      let avgPre = Math.round((preScores.t1 + preScores.t2 + preScores.t3) / 3);
-      let avgPost = Math.round((postScores.t1 + postScores.t2 + postScores.t3) / 3);
-      document.getElementById('repMeanDiff').innerText = '+' + Math.max(0, avgPost - avgPre) + '%';
-
-      leaderboard.push({ name: doctorName, clinic: doctorClinic, score: avgPost });
-      leaderboard.sort((a, b) => b.score - a.score);
-
-      const lbContainer = document.getElementById('leaderboardList');
-      lbContainer.innerHTML = '';
-      leaderboard.forEach((entry, idx) => {
-        const item = document.createElement('div');
-        item.className = 'flex justify-between items-center text-xs py-1 border-b border-slate-900';
-        item.innerHTML = `
-          <span class="text-slate-300 font-semibold">${idx + 1}. ${entry.name} <span class="text-[10px] text-slate-500">${entry.clinic}</span></span>
-          <span class="font-mono text-emerald-400 font-bold">${entry.score}%</span>
-        `;
-        lbContainer.appendChild(item);
-      });
-    }
-
-    function restartFullProtocol() {
-      document.getElementById('reportOverlay').classList.add('hidden');
-      document.getElementById('regOverlay').classList.remove('hidden');
-      currentPhase = 1;
-      currentTaskIdx = 1;
-      document.getElementById('phaseHeaderBadge').innerText = "Phase 1: Pre-Tx";
-      document.getElementById('phaseHeaderBadge').className = "text-[10px] bg-red-950/80 border border-red-800/80 px-3 py-1 rounded-full font-mono text-red-400 font-bold uppercase tracking-wider";
-      document.getElementById('statusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Untreated ET Tremor`;
-      document.getElementById('statusBadge').className = "font-extrabold brand-red uppercase text-xs flex items-center gap-1.5";
-      document.getElementById('docNameInput').value = '';
-      document.getElementById('docClinicInput').value = '';
-    }
-
-    // DRAWING HELPERS
-    function drawCup(x, y, width, height, fillPercentage) {
-      ctx.save();
-      if (fillPercentage > 0) {
-        let currentFillH = (height - 10) * fillPercentage;
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
-        ctx.beginPath();
-        ctx.rect(x - width / 2 + 4, y + height - currentFillH - 4, width - 8, currentFillH);
-        ctx.fill();
-      }
-
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 4;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      
-      ctx.beginPath();
-      ctx.moveTo(x - width / 2, y);
-      ctx.lineTo(x - width / 2 + 8, y + height - 8);
-      ctx.quadraticCurveTo(x - width / 2 + 12, y + height, x - width / 2 + 20, y + height);
-      ctx.lineTo(x + width / 2 - 20, y + height);
-      ctx.quadraticCurveTo(x + width / 2 - 12, y + height, x + width / 2 - 8, y + height - 8);
-      ctx.lineTo(x + width / 2, y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(x, y, width / 2, 8, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(x + width / 2 + 10, y + height / 2 - 5, 18, -Math.PI / 2, Math.PI / 2);
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawKey(x, y) {
-      ctx.save();
-      let grad = ctx.createLinearGradient(x - 20, y, x + 20, y);
-      grad.addColorStop(0, '#fef08a');
-      grad.addColorStop(0.5, '#eab308');
-      grad.addColorStop(1, '#ca8a04');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#854d0e';
-      ctx.lineWidth = 2;
-
-      ctx.beginPath();
-      ctx.arc(x, y + 60, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#020617';
-      ctx.beginPath();
-      ctx.arc(x, y + 60, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(x - 4, y - 50, 8, 100);
-      ctx.strokeRect(x - 4, y - 50, 8, 100);
-
-      ctx.beginPath();
-      ctx.moveTo(x + 4, y - 40);
-      ctx.lineTo(x + 16, y - 40);
-      ctx.lineTo(x + 16, y - 32);
-      ctx.lineTo(x + 8, y - 32);
-      ctx.lineTo(x + 18, y - 24);
-      ctx.lineTo(x + 18, y - 16);
-      ctx.lineTo(x + 8, y - 16);
-      ctx.lineTo(x + 14, y - 8);
-      ctx.lineTo(x + 4, y - 8);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // MAIN RENDER LOOP
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (currentTaskIdx === 1) {
-        cup.x = (canvas.width / 2) + Math.sin(Date.now() * 0.002) * 50;
-        let fillPct = teaAttempts > 0 ? Math.min(1, teaHits / 200) : 0;
-        drawCup(cup.x, cup.y, cup.width, cup.height, fillPct);
-
-        if (isInteracting && t1Timer > 0) {
-          teaAttempts++;
-          waterDrops.push({ x: pointer.x, y: pointer.y, vy: 6 });
-        }
-
-        ctx.fillStyle = '#38bdf8';
-        for (let i = waterDrops.length - 1; i >= 0; i--) {
-          let d = waterDrops[i];
-          d.y += d.vy;
-          ctx.beginPath();
-          ctx.arc(d.x, d.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-
-          if (d.y >= cup.y && d.y <= cup.y + cup.height && d.x >= cup.x - cup.width / 2 && d.x <= cup.x + cup.width / 2) {
-            teaHits++;
-            waterDrops.splice(i, 1);
-          } else if (d.y > canvas.height) {
-            waterDrops.splice(i, 1);
-          }
-        }
-
-        // TASK 1 SCORE PERFORMANCE CALCULATION
-        if (teaAttempts > 0) {
-          let accuracyRatio = teaHits / teaAttempts;
-          currentLiveScore = mapPerformanceToScore(accuracyRatio);
-        }
-        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
-      }
-
-      else if (currentTaskIdx === 2) {
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 12;
-        ctx.beginPath();
-        spiralPath.forEach((pt, i) => {
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
-        });
-        ctx.stroke();
-
-        if (isInteracting) {
-          userPath.push({ x: pointer.x, y: pointer.y });
-        }
-
-        ctx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        userPath.forEach((pt, i) => {
-          if (i === 0) ctx.moveTo(pt.x, pt.y);
-          else ctx.lineTo(pt.x, pt.y);
-        });
-        ctx.stroke();
-
-        // TASK 2 SCORE PERFORMANCE CALCULATION BASED ON DISTANCE DEVIATION
-        if (userPath.length > 5) {
-          let totalDev = 0;
-          userPath.forEach(uPt => {
-            let minDist = Math.min(...spiralPath.map(sPt => Math.hypot(uPt.x - sPt.x, uPt.y - sPt.y)));
-            totalDev += minDist;
-          });
-          let avgDev = totalDev / userPath.length;
-          // Performance ratio: 0 deviation = 1.0 ratio, >30px dev = 0.0 ratio
-          let perfRatio = Math.max(0, 1 - (avgDev / 30));
-          currentLiveScore = mapPerformanceToScore(perfRatio);
-        }
-        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
-      }
-
-      else if (currentTaskIdx === 3) {
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.arc(lock.x, lock.y, lock.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        ctx.fillStyle = '#020617';
-        ctx.beginPath();
-        ctx.arc(lock.x, lock.y - 6, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(lock.x - 6, lock.y - 2);
-        ctx.lineTo(lock.x + 6, lock.y - 2);
-        ctx.lineTo(lock.x + 9, lock.y + 16);
-        ctx.lineTo(lock.x - 9, lock.y + 16);
-        ctx.closePath();
-        ctx.fill();
-
-        let keyPos = isInteracting ? pointer : { x: canvas.width / 2, y: canvas.height / 2 + 110 };
-        drawKey(keyPos.x, keyPos.y);
-
-        // TASK 3 SCORE PERFORMANCE CALCULATION BASED ON DISTANCE TO LOCK
-        let dist = Math.hypot(keyPos.x - lock.x, (keyPos.y - 50) - lock.y);
-        // Performance ratio: 0 dist = 1.0 ratio, >150px dist = 0.0 ratio
-        let perfRatio = Math.max(0, 1 - (dist / 150));
-        currentLiveScore = mapPerformanceToScore(perfRatio);
-        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
-      }
-
-      // Waveform Oscillogram
-      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
-      waveCtx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
-      waveCtx.lineWidth = 2;
-      waveCtx.beginPath();
-      let freq = currentPhase === 1 ? 0.08 : 0.02;
-      let amp = currentPhase === 1 ? 12 : 3;
-      for (let x = 0; x < waveCanvas.width; x++) {
-        let y = waveCanvas.height / 2 + Math.sin(x * freq + Date.now() * 0.01) * amp;
-        if (x === 0) waveCtx.moveTo(x, y);
-        else waveCtx.lineTo(x, y);
-      }
-      waveCtx.stroke();
-
-      requestAnimationFrame(render);
-    }
-
-    canvas.addEventListener('mousedown', (e) => { handleStartInteraction(e); });
-    canvas.addEventListener('mousemove', (e) => { if (isInteracting) updatePointer(e); });
-    canvas.addEventListener('mouseup', () => { isInteracting = false; });
-    canvas.addEventListener('touchstart', (e) => { handleStartInteraction(e); }, { passive: true });
-    canvas.addEventListener('touchmove', (e) => { if (isInteracting) updatePointer(e); }, { passive: true });
-    canvas.addEventListener('touchend', () => { isInteracting = false; });
-
-    window.onload = () => {
-      resizeCanvas();
-      render();
-    };
-  </script>
-</body>
-</html>
+    function open
