@@ -24,7 +24,6 @@
   <div id="regOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-5 text-center">
       <div class="flex flex-col items-center gap-2">
-        <img src="logo.png" alt="Prolet Logo" class="h-12 object-contain" onerror="this.style.display='none'">
         <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest mt-1">IANCON Clinical Assessment Portal</span>
       </div>
 
@@ -54,7 +53,6 @@
   <!-- Header Banner -->
   <header class="w-full max-w-xl flex justify-between items-center bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-xl">
     <div class="flex items-center gap-3">
-      <img src="logo.png" alt="Prolet Logo" class="h-9 object-contain" onerror="this.style.display='none'">
       <span class="font-bold text-sm tracking-wide text-white">PROLET</span>
     </div>
     <div class="flex items-center gap-2">
@@ -107,7 +105,7 @@
     <div class="relative w-full aspect-square bg-slate-950 rounded-xl border-2 border-slate-800/90 overflow-hidden touch-none cursor-crosshair shadow-inner">
       <canvas id="gameCanvas" class="w-full h-full block"></canvas>
       
-      <!-- Instructional Guide Overlay (Auto-Fades on Touch/Click) -->
+      <!-- Instructional Guide Overlay -->
       <div id="instructionBox" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 p-2.5 rounded-xl text-center text-xs text-slate-200 pointer-events-none shadow-lg backdrop-blur transition-opacity duration-300">
         Press & Hold to pour water into the cup (10s timer).
       </div>
@@ -130,7 +128,7 @@
     </div>
   </footer>
 
-  <!-- PHARMACOLOGICAL METABOLISM ANIMATION OVERLAY -->
+  <!-- PHARMACOLOGICAL OVERLAY -->
   <div id="metaOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="text-center mt-2">
       <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Mechanism of Action</span>
@@ -151,7 +149,7 @@
     </div>
   </div>
 
-  <!-- FINAL CLINICAL COMPARATIVE REPORT CARD + LEADERBOARD OVERLAY -->
+  <!-- FINAL REPORT CARD -->
   <div id="reportOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto hidden">
     <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
       
@@ -162,7 +160,6 @@
           </h2>
           <p id="repDocSubtitle" class="text-xs text-slate-400">Physician Performance Summary</p>
         </div>
-        <img src="logo.png" alt="Prolet" class="h-7 object-contain" onerror="this.style.display='none'">
       </div>
 
       <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
@@ -215,18 +212,16 @@
         </div>
 
         <div id="leaderboardList" class="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
-          <!-- Entries inserted dynamically -->
         </div>
       </div>
 
       <button onclick="restartFullProtocol()" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
-        🔄 Restart Evaluation Protocol (New Participant)
+        🔄 Restart Evaluation Protocol
       </button>
     </div>
   </div>
 
   <script>
-    // Canvas & Context Setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const waveCanvas = document.getElementById('waveCanvas');
@@ -234,35 +229,28 @@
     const metaCanvas = document.getElementById('metaCanvas');
     const metaCtx = metaCanvas.getContext('2d');
 
-    // Doctor & Leaderboard Data
     let doctorName = "Dr. Participant";
     let doctorClinic = "";
     let leaderboard = [];
 
-    // Protocol State
     let currentPhase = 1; // 1 = Pre-Tx, 2 = Post-Prolet
-    let currentTaskIdx = 1; // 1, 2, 3
+    let currentTaskIdx = 1; 
     let isInteracting = false;
-    let score = 0;
+    let currentLiveScore = 0;
 
-    // Scores Database
     let preScores = { t1: 0, t2: 0, t3: 0 };
     let postScores = { t1: 0, t2: 0, t3: 0 };
 
-    // Task 1 Timer (10s)
     let t1Timer = 10.0;
     let t1TimerInterval = null;
     let teaAttempts = 0;
     let teaHits = 0;
 
-    // Position Coordinates & Objects
     let pointer = { x: 150, y: 150 };
     let cup = { x: 150, y: 150, width: 80, height: 100, waterLevel: 0 };
     let waterDrops = [];
     let spiralPath = [];
     let userPath = [];
-
-    // Task 3: Key in Lock Parameters
     let lock = { x: 150, y: 150, radius: 45 };
 
     function registerDoctor(e) {
@@ -277,6 +265,20 @@
         document.getElementById('docHeaderTag').classList.remove('hidden');
         document.getElementById('regOverlay').classList.add('hidden');
         resizeCanvas();
+      }
+    }
+
+    // MAP PERFORMANCE TO PRE-TX (20-60%) OR POST-PROLET (75-100%)
+    function mapPerformanceToScore(accuracyRatio) {
+      // accuracyRatio ranges from 0.0 to 1.0 based on precision/performance
+      const clampedRatio = Math.max(0, Math.min(1, accuracyRatio));
+      
+      if (currentPhase === 1) {
+        // Pre-treatment: 20% to 60%
+        return Math.round(20 + (clampedRatio * 40));
+      } else {
+        // Post-Prolet: 75% to 100%
+        return Math.round(75 + (clampedRatio * 25));
       }
     }
 
@@ -299,15 +301,11 @@
       }
     }
 
-    function getRandomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
     function initCurrentTask() {
-      score = 0;
+      currentLiveScore = mapPerformanceToScore(0);
       userPath = [];
       waterDrops = [];
-      document.getElementById('scoreDisplay').innerText = '0%';
+      document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
 
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
@@ -363,10 +361,15 @@
           clearInterval(t1TimerInterval);
           
           resetInstructionBox('Task 1 complete! Preparing Task 2...');
-          setTimeout(() => {
-            if (currentPhase === 1) preScores.t1 = score;
-            else postScores.t1 = score;
+          
+          // Lock final task 1 performance score
+          if (currentPhase === 1) {
+            preScores.t1 = currentLiveScore;
+          } else {
+            postScores.t1 = currentLiveScore;
+          }
 
+          setTimeout(() => {
             currentTaskIdx = 2;
             initCurrentTask();
           }, 1500);
@@ -377,16 +380,19 @@
 
     function forceNextTask() {
       if (currentTaskIdx === 2) {
-        if (currentPhase === 1) preScores.t2 = score;
-        else postScores.t2 = score;
+        if (currentPhase === 1) {
+          preScores.t2 = currentLiveScore;
+        } else {
+          postScores.t2 = currentLiveScore;
+        }
         currentTaskIdx = 3;
         initCurrentTask();
       } else if (currentTaskIdx === 3) {
         if (currentPhase === 1) {
-          preScores.t3 = score;
+          preScores.t3 = currentLiveScore;
           openMetabolismAnimation();
         } else {
-          postScores.t3 = score;
+          postScores.t3 = currentLiveScore;
           showFinalReport();
         }
       }
@@ -403,8 +409,8 @@
 
       if (currentPhase === 1) {
         tremorTime += 0.2;
-        let tremorX = Math.sin(tremorTime * 6) * 8 + Math.cos(tremorTime * 3) * 4;
-        let tremorY = Math.cos(tremorTime * 5) * 8 + Math.sin(tremorTime * 2) * 4;
+        let tremorX = Math.sin(tremorTime * 6) * 14 + Math.cos(tremorTime * 3) * 8;
+        let tremorY = Math.cos(tremorTime * 5) * 14 + Math.sin(tremorTime * 2) * 8;
         pointer.x = rawX + tremorX;
         pointer.y = rawY + tremorY;
       } else {
@@ -486,13 +492,9 @@
       document.getElementById('docClinicInput').value = '';
     }
 
-    // --- DRAWING HELPER FUNCTIONS ---
-    
-    // Draw Realistic Glass Tea Cup
+    // DRAWING HELPERS
     function drawCup(x, y, width, height, fillPercentage) {
       ctx.save();
-      
-      // Water level inside cup
       if (fillPercentage > 0) {
         let currentFillH = (height - 10) * fillPercentage;
         ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
@@ -501,7 +503,6 @@
         ctx.fill();
       }
 
-      // Cup Body
       ctx.strokeStyle = '#cbd5e1';
       ctx.lineWidth = 4;
       ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
@@ -517,25 +518,19 @@
       ctx.fill();
       ctx.stroke();
 
-      // Top Rim
       ctx.beginPath();
       ctx.ellipse(x, y, width / 2, 8, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Glass Handle (Right side)
       ctx.beginPath();
       ctx.arc(x + width / 2 + 10, y + height / 2 - 5, 18, -Math.PI / 2, Math.PI / 2);
       ctx.lineWidth = 4;
       ctx.stroke();
-
       ctx.restore();
     }
 
-    // Draw Realistic Metallic Key
     function drawKey(x, y) {
       ctx.save();
-      
-      // Metallic Gradient
       let grad = ctx.createLinearGradient(x - 20, y, x + 20, y);
       grad.addColorStop(0, '#fef08a');
       grad.addColorStop(0.5, '#eab308');
@@ -545,24 +540,20 @@
       ctx.strokeStyle = '#854d0e';
       ctx.lineWidth = 2;
 
-      // Key Bow (Head)
       ctx.beginPath();
       ctx.arc(x, y + 60, 20, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // Key Hole in Bow
       ctx.fillStyle = '#020617';
       ctx.beginPath();
       ctx.arc(x, y + 60, 8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Key Shaft
       ctx.fillStyle = grad;
       ctx.fillRect(x - 4, y - 50, 8, 100);
       ctx.strokeRect(x - 4, y - 50, 8, 100);
 
-      // Key Blade / Teeth
       ctx.beginPath();
       ctx.moveTo(x + 4, y - 40);
       ctx.lineTo(x + 16, y - 40);
@@ -580,11 +571,10 @@
       ctx.restore();
     }
 
-    // Render Engine
+    // MAIN RENDER LOOP
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Task 1 Render Routine
       if (currentTaskIdx === 1) {
         cup.x = (canvas.width / 2) + Math.sin(Date.now() * 0.002) * 50;
         let fillPct = teaAttempts > 0 ? Math.min(1, teaHits / 200) : 0;
@@ -611,19 +601,14 @@
           }
         }
 
+        // TASK 1 SCORE PERFORMANCE CALCULATION
         if (teaAttempts > 0) {
-          let rawAccuracy = (teaHits / teaAttempts) * 100;
-          if (currentPhase === 1) {
-            // Tremor causes significant spillage -> Cap accuracy realistic low (18% - 38%)
-            score = Math.min(getRandomInt(22, 38), Math.round(rawAccuracy * 0.4));
-          } else {
-            // Post-Tx steady pour -> High precision (88% - 98%)
-            score = Math.min(98, Math.max(getRandomInt(88, 96), Math.round(rawAccuracy * 1.1)));
-          }
+          let accuracyRatio = teaHits / teaAttempts;
+          currentLiveScore = mapPerformanceToScore(accuracyRatio);
         }
+        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
       }
 
-      // Task 2 Render Routine
       else if (currentTaskIdx === 2) {
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 12;
@@ -647,21 +632,22 @@
         });
         ctx.stroke();
 
+        // TASK 2 SCORE PERFORMANCE CALCULATION BASED ON DISTANCE DEVIATION
         if (userPath.length > 5) {
-          if (currentPhase === 1) {
-            // High tremor wave deviation -> Low spiral score (20% - 42%)
-            let devFactor = (userPath.length % 15);
-            score = getRandomInt(20, 35) + devFactor;
-          } else {
-            // Smooth trajectory -> High spiral score (86% - 96%)
-            score = Math.min(97, getRandomInt(88, 95) + (userPath.length % 3));
-          }
+          let totalDev = 0;
+          userPath.forEach(uPt => {
+            let minDist = Math.min(...spiralPath.map(sPt => Math.hypot(uPt.x - sPt.x, uPt.y - sPt.y)));
+            totalDev += minDist;
+          });
+          let avgDev = totalDev / userPath.length;
+          // Performance ratio: 0 deviation = 1.0 ratio, >30px dev = 0.0 ratio
+          let perfRatio = Math.max(0, 1 - (avgDev / 30));
+          currentLiveScore = mapPerformanceToScore(perfRatio);
         }
+        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
       }
 
-      // Task 3 Render Routine
       else if (currentTaskIdx === 3) {
-        // Draw Lock Escutcheon
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.arc(lock.x, lock.y, lock.radius, 0, Math.PI * 2);
@@ -670,7 +656,6 @@
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Keyhole Shape
         ctx.fillStyle = '#020617';
         ctx.beginPath();
         ctx.arc(lock.x, lock.y - 6, 8, 0, Math.PI * 2);
@@ -683,21 +668,18 @@
         ctx.closePath();
         ctx.fill();
 
-        // Draw Dragged Key
         let keyPos = isInteracting ? pointer : { x: canvas.width / 2, y: canvas.height / 2 + 110 };
         drawKey(keyPos.x, keyPos.y);
 
+        // TASK 3 SCORE PERFORMANCE CALCULATION BASED ON DISTANCE TO LOCK
         let dist = Math.hypot(keyPos.x - lock.x, (keyPos.y - 50) - lock.y);
-        if (dist < 35) {
-          score = currentPhase === 1 ? getRandomInt(25, 45) : getRandomInt(90, 98);
-        } else {
-          score = currentPhase === 1 ? getRandomInt(10, 25) : getRandomInt(45, 70);
-        }
+        // Performance ratio: 0 dist = 1.0 ratio, >150px dist = 0.0 ratio
+        let perfRatio = Math.max(0, 1 - (dist / 150));
+        currentLiveScore = mapPerformanceToScore(perfRatio);
+        document.getElementById('scoreDisplay').innerText = currentLiveScore + '%';
       }
 
-      document.getElementById('scoreDisplay').innerText = score + '%';
-
-      // Draw Waveform Oscillogram
+      // Waveform Oscillogram
       waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
       waveCtx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
       waveCtx.lineWidth = 2;
@@ -714,7 +696,6 @@
       requestAnimationFrame(render);
     }
 
-    // Canvas Interaction Listeners
     canvas.addEventListener('mousedown', (e) => { handleStartInteraction(e); });
     canvas.addEventListener('mousemove', (e) => { if (isInteracting) updatePointer(e); });
     canvas.addEventListener('mouseup', () => { isInteracting = false; });
