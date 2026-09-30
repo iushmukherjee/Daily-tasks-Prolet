@@ -261,7 +261,7 @@
       } catch (e) {}
     }
 
-    // Continuous Water Pouring Synthesizer (White noise generator through bandpass filter)
+    // Bottle Pouring Synthesizer (Low-pass filtered stream & cavity resonance)
     function startWaterSound() {
       try {
         initAudio();
@@ -279,12 +279,12 @@
         waterSoundNode.loop = true;
 
         let filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        filter.Q.setValueAtTime(1.5, audioCtx.currentTime);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450, audioCtx.currentTime);
+        filter.Q.setValueAtTime(3.0, audioCtx.currentTime);
 
         waterGainNode = audioCtx.createGain();
-        waterGainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        waterGainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
 
         waterSoundNode.connect(filter);
         filter.connect(waterGainNode);
@@ -303,6 +303,20 @@
           waterGainNode = null;
         }
       } catch (e) {}
+    }
+
+    function setWaterSoundActive(active) {
+      if (active) {
+        if (!waterSoundNode) {
+          startWaterSound();
+        } else if (waterGainNode) {
+          waterGainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        }
+      } else {
+        if (waterGainNode && audioCtx) {
+          waterGainNode.gain.setValueAtTime(0.0, audioCtx.currentTime);
+        }
+      }
     }
 
     function triggerHaptic(pattern) {
@@ -524,10 +538,6 @@
       playTone(330, 'sine', 0.05, 0.03);
       triggerHaptic(15);
 
-      if (currentTaskIdx === 1) {
-        startWaterSound();
-      }
-
       const box = document.getElementById('instructionBox');
       if (box) box.classList.add('opacity-0');
     }
@@ -748,16 +758,20 @@
 
         drawGlassCup(cup.x, cup.y, cup.width, cup.height, cup.waterLevel);
 
+        let inCupX = false;
         if (isInteracting && t1Timer > 0) {
           teaAttempts++;
           waterDrops.push({ x: pointer.x + (Math.random() * 4 - 2), y: pointer.y + 10, vy: 7 });
 
-          let inCupX = pointer.x > (cup.x - cup.width/2) && pointer.x < (cup.x + cup.width/2);
+          inCupX = pointer.x > (cup.x - cup.width/2) && pointer.x < (cup.x + cup.width/2);
           if (inCupX) {
             teaHits++;
             if (cup.waterLevel < 100) cup.waterLevel += 0.45;
           }
         }
+
+        // Only play water pouring sound when actively interacting AND hitting inside the glass cup
+        setWaterSoundActive(isInteracting && t1Timer > 0 && inCupX);
 
         ctx.fillStyle = '#38bdf8';
         for (let i = waterDrops.length - 1; i >= 0; i--) {
