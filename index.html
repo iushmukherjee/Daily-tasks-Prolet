@@ -50,11 +50,11 @@
     </div>
   </div>
 
-  <!-- Header Banner with Brand Logo -->
+  <!-- Header Banner with Brand Logo and Improved Contrast Wrapper -->
   <header class="w-full max-w-xl flex justify-between items-center bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-xl">
-    <div class="flex items-center gap-3">
-      <img src="logo.png" alt="Prolet Logo" class="h-8 w-auto object-contain" />
-      <span class="font-bold text-sm tracking-wide text-white">PROLET</span>
+    <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-inner">
+      <img src="logo.png" alt="Prolet Logo" class="h-7 w-auto object-contain" />
+      <span class="font-black text-sm tracking-wide text-white">PROLET</span>
     </div>
     <div class="flex items-center gap-2">
       <span id="docHeaderTag" class="text-[11px] font-bold text-cyan-400 font-mono hidden">Dr. Anonymous</span>
@@ -232,6 +232,43 @@
     const waveCanvas = document.getElementById('waveCanvas');
     const waveCtx = waveCanvas.getContext('2d');
 
+    // Web Audio API Synthesizer & Haptics Engine Setup
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type, duration, vol = 0.05) {
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function triggerHaptic(pattern) {
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate(pattern);
+        }
+      } catch (e) {}
+    }
+
     let doctorName = "Dr. Participant";
     let doctorClinic = "";
     let leaderboard = [];
@@ -261,6 +298,10 @@
 
     function registerDoctor(e) {
       if (e) e.preventDefault();
+      initAudio();
+      playTone(587.33, 'sine', 0.2, 0.1);
+      triggerHaptic(50);
+
       const inputName = document.getElementById('docNameInput').value.trim();
       const inputClinic = document.getElementById('docClinicInput').value.trim();
 
@@ -367,6 +408,8 @@
           t1Timer = 0;
           clearInterval(t1TimerInterval);
           
+          playTone(440, 'triangle', 0.3, 0.08);
+          triggerHaptic([30, 50, 30]);
           resetInstructionBox('Task 1 complete! Preparing Task 2...');
           
           if (currentPhase === 1) {
@@ -385,6 +428,9 @@
     }
 
     function forceNextTask() {
+      playTone(523.25, 'sine', 0.2, 0.08);
+      triggerHaptic(40);
+
       if (currentTaskIdx === 2) {
         if (currentPhase === 1) {
           preScores.t2 = currentLiveScore;
@@ -428,6 +474,8 @@
     function handleStartInteraction(e) {
       isInteracting = true;
       updatePointer(e);
+      playTone(330, 'sine', 0.05, 0.03);
+      triggerHaptic(15);
       const box = document.getElementById('instructionBox');
       if (box) box.classList.add('opacity-0');
     }
@@ -450,6 +498,8 @@
     window.addEventListener('touchend', handleEndInteraction);
 
     function openMetabolismAnimation() {
+      playTone(659.25, 'triangle', 0.4, 0.1);
+      triggerHaptic([50, 100, 50]);
       const metaOverlay = document.getElementById('metaOverlay');
       metaOverlay.classList.remove('hidden');
       const videoEl = document.getElementById('transitionVideo');
@@ -462,6 +512,9 @@
     }
 
     function startPhase2() {
+      playTone(880, 'sine', 0.3, 0.1);
+      triggerHaptic(60);
+
       const metaOverlay = document.getElementById('metaOverlay');
       metaOverlay.classList.add('hidden');
       const videoEl = document.getElementById('transitionVideo');
@@ -483,6 +536,9 @@
     }
 
     function showFinalReport() {
+      playTone(783.99, 'sine', 0.4, 0.1);
+      triggerHaptic([40, 40, 80]);
+
       document.getElementById('repDocSubtitle').innerText = `${doctorName} ${doctorClinic ? '• ' + doctorClinic : ''}`;
 
       document.getElementById('repPre1').innerText = preScores.t1 + '%';
@@ -525,9 +581,11 @@
     }
 
     function restartFullProtocol() {
+      playTone(400, 'sine', 0.2, 0.08);
+      triggerHaptic(30);
+
       document.getElementById('reportOverlay').classList.add('hidden');
       
-      // Reset inputs & state back to registration
       document.getElementById('docNameInput').value = '';
       document.getElementById('docClinicInput').value = '';
       document.getElementById('docHeaderTag').classList.add('hidden');
