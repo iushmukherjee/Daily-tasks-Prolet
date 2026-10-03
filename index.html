@@ -427,8 +427,8 @@
         clearInterval(t1TimerInterval);
         document.getElementById('timerContainer').classList.add('hidden');
         document.getElementById('nextTaskBtn').classList.remove('hidden');
-        resetInstructionBox('Trace over the handwriting text "Prolet 12.5" to write the prescription.');
-        pointer = { x: cx - 80, y: cy };
+        resetInstructionBox('Trace over the large handwriting text "Prolet 12.5" to write the prescription.');
+        pointer = { x: cx - 100, y: cy };
       }
     }
 
@@ -487,8 +487,9 @@
 
       if (currentPhase === 1) {
         tremorTime += 0.2;
-        let tremorX = Math.sin(tremorTime * 6) * 14 + Math.cos(tremorTime * 3) * 8;
-        let tremorY = Math.cos(tremorTime * 5) * 14 + Math.sin(tremorTime * 2) * 8;
+        // Reduced amplitude multipliers for a more natural, realistic tremor appearance
+        let tremorX = Math.sin(tremorTime * 6) * 6 + Math.cos(tremorTime * 3) * 3;
+        let tremorY = Math.cos(tremorTime * 5) * 6 + Math.sin(tremorTime * 2) * 3;
         pointer.x = rawX + tremorX;
         pointer.y = rawY + tremorY;
       } else {
@@ -768,11 +769,11 @@
           canvasWrapper.style.backgroundColor = '#020617';
         }
 
-        // Draw Target Cursive Handwriting Text Guide ("Prolet 12.5")
+        // Draw Larger Target Cursive Handwriting Text Guide ("Prolet 12.5")
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
 
-        ctx.font = 'bold 64px "Caveat", cursive';
+        ctx.font = 'bold 96px "Caveat", cursive';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -803,7 +804,7 @@
             totalDev += dev;
           });
           let avgDev = totalDev / userPath.length;
-          let accuracy = Math.max(0, 1 - (avgDev / 45));
+          let accuracy = Math.max(0, 1 - (avgDev / 55));
           currentLiveScore = mapPerformanceToScore(accuracy);
         }
 
