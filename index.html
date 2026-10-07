@@ -19,6 +19,38 @@
       image-rendering: -webkit-optimize-contrast;
       image-rendering: crisp-edges;
     }
+
+    /* Print styling to export clean PDF report */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #reportOverlay, #reportOverlay * {
+        visibility: visible;
+      }
+      #reportOverlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        background: white !important;
+        color: black !important;
+      }
+      #reportOverlay .bg-slate-900,
+      #reportOverlay .bg-slate-950,
+      #reportOverlay .bg-gradient-to-r {
+        background: white !important;
+        border-color: #cbd5e1 !important;
+        color: black !important;
+      }
+      #reportOverlay h2, #reportOverlay span, #reportOverlay p {
+        color: #0f172a !important;
+      }
+      #reportOverlay button {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-3 select-none font-sans relative overflow-x-hidden">
@@ -152,7 +184,7 @@
     </div>
   </div>
 
-  <!-- CLINICAL CASE REPORT CARD (Replaces Leaderboard) -->
+  <!-- CLINICAL CASE REPORT CARD -->
   <div id="reportOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto hidden">
     <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
       
@@ -342,7 +374,7 @@
     let cup = { x: 150, y: 220, width: 85, height: 110, waterLevel: 0, dir: 1, speed: 1.8 };
     let waterDrops = [];
     
-    let userPath = []; // Multi-stroke tracking array
+    let userPath = []; 
     let animFrameId = null;
 
     function registerDoctor(e) {
@@ -606,7 +638,8 @@
     }
 
     function exportClinicalReport() {
-      alert("Clinical EMR Report generated and queued for export/printing.");
+      // Triggers browser print/save-as-PDF dialog optimized for medical report output
+      window.print();
     }
 
     function restartFullProtocol() {
@@ -773,7 +806,6 @@
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
 
-        // Enlarged 130px tracing template
         ctx.font = 'bold 130px "Caveat", cursive';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -781,7 +813,6 @@
         ctx.fillStyle = 'rgba(51, 65, 85, 0.6)';
         ctx.fillText('Prolet 12.5', cx, cy);
 
-        // Independent multi-stroke rendering (no connecting lines on pen lifts)
         if (userPath.length > 0) {
           ctx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
           ctx.lineWidth = 4;
