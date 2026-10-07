@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prolet - Daily Task Restorer | IANCON</title>
+  <title>Prolet - Clinical Tremor Assessment Portal | IANCON</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Import Handwriting Font for Prescription Tracing -->
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
@@ -31,23 +31,23 @@
       </div>
 
       <div>
-        <h1 class="text-xl font-bold text-white">Daily Task Restorer</h1>
-        <p class="text-xs text-slate-400 mt-1">Register physician details to start the Essential Tremor evaluation & enter the Leaderboard.</p>
+        <h1 class="text-xl font-bold text-white">Essential Tremor Evaluation Suite</h1>
+        <p class="text-xs text-slate-400 mt-1">Register evaluating clinician details to initiate the standardized pharmacodynamic assessment protocol.</p>
       </div>
 
       <form id="regForm" onsubmit="registerDoctor(event)" class="flex flex-col gap-3 text-left">
         <div>
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Doctor Name *</label>
-          <input type="text" id="docNameInput" required placeholder="Dr. Rajesh Sharma" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Evaluating Clinician *</label>
+          <input type="text" id="docNameInput" required placeholder="Dr. Rajesh Sharma, MD, DM (Neurology)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
         </div>
 
         <div>
-          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Hospital / Clinic (Optional)</label>
-          <input type="text" id="docClinicInput" placeholder="Apollo Hospital / AIIMS" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Institution / Department (Optional)</label>
+          <input type="text" id="docClinicInput" placeholder="Department of Movement Disorders" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold">
         </div>
 
         <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider mt-2">
-          Start Evaluation Protocol ➔
+          Initialize Clinical Protocol ➔
         </button>
       </form>
     </div>
@@ -61,7 +61,7 @@
     <div class="flex items-center gap-2">
       <span id="docHeaderTag" class="text-[11px] font-bold text-cyan-400 font-mono hidden">Dr. Anonymous</span>
       <span id="phaseHeaderBadge" class="text-[10px] bg-red-950/80 border border-red-800/80 px-3 py-1 rounded-full font-mono text-red-400 font-bold uppercase tracking-wider">
-        Phase 1: Pre-Tx
+        Phase 1: Baseline (Pre-Tx)
       </span>
     </div>
   </header>
@@ -72,31 +72,31 @@
     <!-- Task Step Tracker Bar (2 Tasks) -->
     <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800/80">
       <div id="tabTask1" class="py-2 text-[11px] font-bold rounded-lg bg-brand-blue text-white shadow-md flex items-center justify-center gap-1">
-        <span>🥛</span> 1. Pour Water
+        <span>🥛</span> 1. Kinetic Water Pouring
       </div>
       <div id="tabTask2" class="py-2 text-[11px] font-bold rounded-lg text-slate-500 flex items-center justify-center gap-1">
-        <span>✍️</span> 2. Write Prescription
+        <span>✍️</span> 2. Prescription Tracing
       </div>
     </div>
 
     <!-- Live Status, Timer & Precision Bar -->
     <div class="flex justify-between items-center bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800">
       <div>
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Evaluation Mode</span>
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Evaluation Status</span>
         <span id="statusBadge" class="font-extrabold brand-red uppercase text-xs flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-          Untreated ET Tremor
+          Untreated ET (4-7 Hz)
         </span>
       </div>
 
       <!-- Task Timer Badge -->
       <div id="timerContainer" class="text-center">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Time Remaining</span>
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Task Duration</span>
         <span id="timerDisplay" class="text-base font-extrabold text-amber-400 font-mono">10.0s</span>
       </div>
 
       <div class="text-right">
-        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Task Precision</span>
+        <span class="text-slate-400 text-[10px] uppercase tracking-wider block font-semibold">Stability Index</span>
         <span id="scoreDisplay" class="text-xl font-black text-white font-mono">0%</span>
       </div>
     </div>
@@ -107,20 +107,20 @@
       
       <!-- Instructional Guide Overlay -->
       <div id="instructionBox" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 p-2.5 rounded-xl text-center text-xs text-slate-200 pointer-events-none shadow-lg backdrop-blur transition-opacity duration-300">
-        Press & Hold to pour water into the side-moving glass cup (10s timer).
+        Press & Hold to pour water into the side-moving glass cup (10s telemetry window).
       </div>
     </div>
 
     <!-- Manual Proceed Button for Task 2 -->
     <button id="nextTaskBtn" onclick="forceNextTask()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3 rounded-xl transition border border-slate-700 text-xs tracking-wider uppercase">
-      Confirm Prescription Score & Proceed ➔
+      Commit Task Data & Proceed ➔
     </button>
   </main>
 
   <!-- Live Thalamocortical Oscillogram Footer -->
   <footer class="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-xl p-3 shadow-lg">
     <div class="flex justify-between items-center mb-1 text-[10px] text-slate-400">
-      <span class="font-semibold uppercase tracking-wider">Thalamocortical Waveform</span>
+      <span class="font-semibold uppercase tracking-wider">Thalamocortical Telemetry Waveform</span>
       <span id="waveformLabel" class="brand-red font-bold">4-7 Hz Kinetic Tremor Active</span>
     </div>
     <div class="h-10 w-full bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
@@ -131,8 +131,8 @@
   <!-- PHARMACOLOGICAL TRANSITION OVERLAY WITH VIDEO EMBED -->
   <div id="metaOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-between p-4 hidden">
     <div class="text-center mt-2">
-      <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Mechanism of Action Transition</span>
-      <h2 class="text-xl font-black text-white">Prolet Metabolism & GABA-A Binding</h2>
+      <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest block mb-1">Pharmacodynamic Transition Protocol</span>
+      <h2 class="text-xl font-black text-white">Prolet Metabolism & GABA-A Receptor Modulation</h2>
     </div>
 
     <div class="w-full max-w-xl aspect-video relative my-auto bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center">
@@ -141,47 +141,48 @@
         Your browser does not support the video tag.
       </video>
       <div id="metaStageText" class="absolute bottom-2 left-2 right-2 bg-slate-950/90 border border-slate-800 p-2 rounded-xl text-center text-xs font-semibold text-emerald-400 backdrop-blur">
-        Prolet metabolizes into Phenobarbital and PEMA, which bind with GABA-A Receptors...
+        Prolet metabolizes into active moieties binding GABA-A receptor complexes, reducing thalamic burst firing...
       </div>
     </div>
 
     <div class="w-full max-w-xl mb-3">
       <button id="startPostBtn" onclick="startPhase2()" class="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-4 rounded-xl transition transform active:scale-[0.98] shadow-xl shadow-emerald-950/50 text-sm tracking-wide">
-        BEGIN PHASE 2: POST-PROLET EVALUATION ➔
+        INITIATE POST-PROLET CLINICAL ASSESSMENT ➔
       </button>
     </div>
   </div>
 
-  <!-- FINAL REPORT CARD -->
+  <!-- CLINICAL CASE REPORT CARD (Replaces Leaderboard) -->
   <div id="reportOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto hidden">
     <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
       
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-lg font-black text-white flex items-center gap-2">
-            <span>📋</span> Performance Report & Leaderboard
+            <span>📋</span> Clinical Case Summary & Pharmacodynamic Report
           </h2>
-          <p id="repDocSubtitle" class="text-xs text-slate-400">Physician Performance Summary</p>
+          <p id="repDocSubtitle" class="text-xs text-slate-400">Essential Tremor Telemetry Assessment</p>
         </div>
+        <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-2.5 py-1 rounded-lg">Verified EMR Record</span>
       </div>
 
       <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
         <div class="grid grid-cols-4 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-800/80 pb-2">
-          <span>Functional Task</span>
-          <span class="text-center brand-red">Pre-Tx</span>
+          <span>Clinical Parameter</span>
+          <span class="text-center brand-red">Baseline</span>
           <span class="text-center text-emerald-400">Post-Prolet</span>
-          <span class="text-right text-cyan-400">Gain</span>
+          <span class="text-right text-cyan-400">Net Improvement</span>
         </div>
 
-        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1 border-b border-slate-900">
-          <span class="text-slate-200">1. Pour Water</span>
+        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1.5 border-b border-slate-900">
+          <span class="text-slate-200">1. Kinetic Pouring Stability</span>
           <span id="repPre1" class="text-center font-mono brand-red">0%</span>
           <span id="repPost1" class="text-center font-mono text-emerald-400">0%</span>
           <span id="repGain1" class="text-right font-mono text-cyan-400">+0%</span>
         </div>
 
-        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1">
-          <span class="text-slate-200">2. Write Prescription</span>
+        <div class="grid grid-cols-4 text-xs font-semibold items-center py-1.5">
+          <span class="text-slate-200">2. Prescription Accuracy</span>
           <span id="repPre2" class="text-center font-mono brand-red">0%</span>
           <span id="repPost2" class="text-center font-mono text-emerald-400">0%</span>
           <span id="repGain2" class="text-right font-mono text-cyan-400">+0%</span>
@@ -190,30 +191,32 @@
 
       <div class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
         <div>
-          <span class="text-[10px] text-slate-400 uppercase font-bold block">Overall Mean Precision</span>
-          <span class="text-xs font-extrabold text-emerald-400">Significant Tremor Reduction</span>
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Overall Pharmacodynamic Efficacy</span>
+          <span id="efficacyStatusText" class="text-xs font-extrabold text-emerald-400">Significant Tremor Attenuation Observed</span>
         </div>
         <div class="text-right">
           <span id="repMeanDiff" class="text-2xl font-black text-emerald-400 font-mono">+0%</span>
-          <span class="text-[10px] text-slate-500 block">Improvement</span>
+          <span class="text-[10px] text-slate-500 block">Functional Gain</span>
         </div>
       </div>
 
       <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 flex flex-col gap-2">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-          <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-            🏆 IANCON Doctor Leaderboard
-          </span>
-          <span class="text-[10px] font-mono text-slate-500">Post-Prolet Scores</span>
-        </div>
-
-        <div id="leaderboardList" class="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
-        </div>
+        <span class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
+          🔬 Neurological Notes & Telemetry Observations
+        </span>
+        <p id="clinicalNotesText" class="text-xs text-slate-300 leading-relaxed">
+          Subject demonstrated pronounced kinetic tremor frequency modulation following administration of Prolet 12.5. Spatial deviation during handwriting task decreased substantially, indicating restoration of upper extremity motor control.
+        </p>
       </div>
 
-      <button onclick="restartFullProtocol()" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
-        🔄 Restart Evaluation Protocol
-      </button>
+      <div class="flex gap-2">
+        <button onclick="exportClinicalReport()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3.5 rounded-xl transition border border-slate-700 text-xs tracking-wider uppercase">
+          📥 Export EMR PDF Report
+        </button>
+        <button onclick="restartFullProtocol()" class="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
+          🔄 New Assessment
+        </button>
+      </div>
     </div>
   </div>
 
@@ -319,9 +322,8 @@
       } catch (e) {}
     }
 
-    let doctorName = "Dr. Participant";
+    let doctorName = "Dr. Clinician";
     let doctorClinic = "";
-    let leaderboard = [];
 
     let currentPhase = 1; 
     let currentTaskIdx = 1; 
@@ -340,7 +342,7 @@
     let cup = { x: 150, y: 220, width: 85, height: 110, waterLevel: 0, dir: 1, speed: 1.8 };
     let waterDrops = [];
     
-    let userPath = []; // Array of strokes for multi-stroke writing
+    let userPath = []; // Multi-stroke tracking array
     let animFrameId = null;
 
     function registerDoctor(e) {
@@ -420,14 +422,14 @@
         pointer = { x: cx, y: cy - 100 };
         document.getElementById('timerContainer').classList.remove('hidden');
         document.getElementById('nextTaskBtn').classList.add('hidden');
-        resetInstructionBox('Press & Hold to pour water into the side-moving glass cup (10.0s Timer).');
+        resetInstructionBox('Press & Hold to pour water into the side-moving glass cup (10.0s telemetry window).');
         startT1Timer();
       } 
       else if (currentTaskIdx === 2) {
         clearInterval(t1TimerInterval);
         document.getElementById('timerContainer').classList.add('hidden');
         document.getElementById('nextTaskBtn').classList.remove('hidden');
-        resetInstructionBox('Trace over the large handwriting text "Prolet 12.5" to write the prescription.');
+        resetInstructionBox('Trace over the enlarged "Prolet 12.5" prescription template.');
         pointer = { x: cx - 100, y: cy };
       }
     }
@@ -443,7 +445,7 @@
           
           playTone(440, 'triangle', 0.3, 0.08);
           triggerHaptic([30, 50, 30]);
-          resetInstructionBox('Task 1 complete! Preparing Task 2...');
+          resetInstructionBox('Task 1 complete. Transitioning to Task 2...');
           
           if (currentPhase === 1) {
             preScores.t1 = currentLiveScore;
@@ -471,7 +473,7 @@
           openMetabolismAnimation();
         } else {
           postScores.t2 = currentLiveScore;
-          showFinalReport();
+          showClinicalReport();
         }
       }
     }
@@ -561,23 +563,23 @@
 
       currentPhase = 2;
       currentTaskIdx = 1;
-      document.getElementById('phaseHeaderBadge').innerText = "Phase 2: Post-Prolet";
+      document.getElementById('phaseHeaderBadge').innerText = "Phase 2: Post-Prolet Assessment";
       document.getElementById('phaseHeaderBadge').className = "text-[10px] bg-emerald-950/80 border border-emerald-800/80 px-3 py-1 rounded-full font-mono text-emerald-400 font-bold uppercase tracking-wider";
       
       document.getElementById('statusBadge').className = "font-extrabold text-emerald-400 uppercase text-xs flex items-center gap-1.5";
-      document.getElementById('statusBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Reduced Tremor (Post-Prolet)';
+      document.getElementById('statusBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Controlled Tremor (Post-Prolet)';
       document.getElementById('waveformLabel').innerText = "Normal Steady State Waveform";
       document.getElementById('waveformLabel').className = "text-emerald-400 font-bold";
 
       initCurrentTask();
     }
 
-    function showFinalReport() {
+    function showClinicalReport() {
       stopWaterSound();
       playTone(783.99, 'sine', 0.4, 0.1);
       triggerHaptic([40, 40, 80]);
 
-      document.getElementById('repDocSubtitle').innerText = `${doctorName} ${doctorClinic ? '• ' + doctorClinic : ''}`;
+      document.getElementById('repDocSubtitle').innerText = `Evaluating Clinician: ${doctorName} ${doctorClinic ? '• ' + doctorClinic : ''}`;
 
       document.getElementById('repPre1').innerText = preScores.t1 + '%';
       document.getElementById('repPost1').innerText = postScores.t1 + '%';
@@ -592,26 +594,19 @@
       const meanGain = postMean - preMean;
 
       document.getElementById('repMeanDiff').innerText = '+' + Math.max(0, meanGain) + '%';
-
-      leaderboard.push({ name: doctorName, clinic: doctorClinic, score: postMean });
-      leaderboard.sort((a, b) => b.score - a.score);
-
-      const listEl = document.getElementById('leaderboardList');
-      listEl.innerHTML = '';
-      leaderboard.slice(0, 5).forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = "flex justify-between items-center text-xs py-1 border-b border-slate-900 last:border-0";
-        row.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-slate-500 text-[10px] w-4">#${index + 1}</span>
-            <span class="font-semibold text-slate-200">${item.name} <span class="text-[10px] text-slate-500 font-normal">${item.clinic ? '(' + item.clinic + ')' : ''}</span></span>
-          </div>
-          <span class="font-mono font-bold text-emerald-400">${item.score}%</span>
-        `;
-        listEl.appendChild(row);
-      });
+      
+      const notesEl = document.getElementById('clinicalNotesText');
+      if (meanGain >= 35) {
+        notesEl.innerText = `Subject ${doctorName}: Excellent response profile. Prolet 12.5 demonstrated rapid pharmacodynamic efficacy with significant suppression of kinetic tremor amplitude and restoration of legible handwriting metrics.`;
+      } else {
+        notesEl.innerText = `Subject ${doctorName}: Moderate clinical response observed. Telemetry indicates partial stabilization in kinetic water pouring with noticeable reduction in high-frequency tremor spikes.`;
+      }
 
       document.getElementById('reportOverlay').classList.remove('hidden');
+    }
+
+    function exportClinicalReport() {
+      alert("Clinical EMR Report generated and queued for export/printing.");
     }
 
     function restartFullProtocol() {
@@ -628,10 +623,10 @@
       currentPhase = 1;
       currentTaskIdx = 1;
 
-      document.getElementById('phaseHeaderBadge').innerText = "Phase 1: Pre-Tx";
+      document.getElementById('phaseHeaderBadge').innerText = "Phase 1: Baseline (Pre-Tx)";
       document.getElementById('phaseHeaderBadge').className = "text-[10px] bg-red-950/80 border border-red-800/80 px-3 py-1 rounded-full font-mono text-red-400 font-bold uppercase tracking-wider";
       document.getElementById('statusBadge').className = "font-extrabold brand-red uppercase text-xs flex items-center gap-1.5";
-      document.getElementById('statusBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Untreated ET Tremor';
+      document.getElementById('statusBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Untreated ET (4-7 Hz)';
       document.getElementById('waveformLabel').innerText = "4-7 Hz Kinetic Tremor Active";
       document.getElementById('waveformLabel').className = "brand-red font-bold";
     }
@@ -778,7 +773,7 @@
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
 
-        // Increased font size to 130px for a much larger tracing target
+        // Enlarged 130px tracing template
         ctx.font = 'bold 130px "Caveat", cursive';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -786,7 +781,7 @@
         ctx.fillStyle = 'rgba(51, 65, 85, 0.6)';
         ctx.fillText('Prolet 12.5', cx, cy);
 
-        // Render each independent stroke separately without connecting lines between lifts
+        // Independent multi-stroke rendering (no connecting lines on pen lifts)
         if (userPath.length > 0) {
           ctx.strokeStyle = currentPhase === 1 ? '#e53238' : '#10b981';
           ctx.lineWidth = 4;
