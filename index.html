@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prolet - Clinical Tremor Assessment Portal | IANCON</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Include html2pdf library for direct PDF downloading -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- Import Handwriting Font for Prescription Tracing -->
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -18,38 +20,6 @@
     canvas {
       image-rendering: -webkit-optimize-contrast;
       image-rendering: crisp-edges;
-    }
-
-    /* Print styling to export clean PDF report */
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #reportOverlay, #reportOverlay * {
-        visibility: visible;
-      }
-      #reportOverlay {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: auto;
-        background: white !important;
-        color: black !important;
-      }
-      #reportOverlay .bg-slate-900,
-      #reportOverlay .bg-slate-950,
-      #reportOverlay .bg-gradient-to-r {
-        background: white !important;
-        border-color: #cbd5e1 !important;
-        color: black !important;
-      }
-      #reportOverlay h2, #reportOverlay span, #reportOverlay p {
-        color: #0f172a !important;
-      }
-      #reportOverlay button {
-        display: none !important;
-      }
     }
   </style>
 </head>
@@ -186,7 +156,7 @@
 
   <!-- CLINICAL CASE REPORT CARD -->
   <div id="reportOverlay" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto hidden">
-    <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
+    <div id="pdfExportContainer" class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 my-auto">
       
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
@@ -241,11 +211,11 @@
         </p>
       </div>
 
-      <div class="flex gap-2">
-        <button onclick="exportClinicalReport()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3.5 rounded-xl transition border border-slate-700 text-xs tracking-wider uppercase">
-          📥 Export EMR PDF Report
+      <div id="pdfActionButtons" class="flex gap-2 pt-1">
+        <button onclick="exportClinicalReport()" class="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
+          📥 Download EMR PDF Report
         </button>
-        <button onclick="restartFullProtocol()" class="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition shadow-lg text-xs uppercase tracking-wider">
+        <button onclick="restartFullProtocol()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3.5 rounded-xl transition border border-slate-700 text-xs tracking-wider uppercase">
           🔄 New Assessment
         </button>
       </div>
@@ -638,8 +608,23 @@
     }
 
     function exportClinicalReport() {
-      // Triggers browser print/save-as-PDF dialog optimized for medical report output
-      window.print();
+      const element = document.getElementById('pdfExportContainer');
+      const actionButtons = document.getElementById('pdfActionButtons');
+      
+      // Temporarily hide buttons in the downloaded PDF
+      actionButtons.style.display = 'none';
+
+      const opt = {
+        margin:       0.5,
+        filename:     `Prolet_Clinical_Report_${doctorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(element).set(opt).save().then(() => {
+        actionButtons.style.display = 'flex';
+      });
     }
 
     function restartFullProtocol() {
